@@ -1,0 +1,113 @@
+<div class="LearningCard">
+  <div v-if="!currentCard && ready">
+    Could not load this card.
+    <button class="btn btn--standard" @click="fetchUnit">Retry</button>
+  </div>
+  <div class="LearningCard__form" v-if="currentCard">
+    <form @submit.prevent>
+      <div class="Card">
+        <div class="Card__body">
+          <div class="form__group">
+            <label class="label" for="currentCard.name">Name</label>
+            <input class="input" type="text" id="currentCard.name" ref="name" @change="save" v-model="name" />
+          </div>
+          <div class="form__group">
+            <label class="label" for="AudioDropzone">Audio</label>
+            <vue-dropzone
+              id="AudioDropzone"
+              ref="AudioDropzone"
+              class="Dropzone Dropzone--audio"
+              :options="audioDropzoneOptions"
+              :includeStyling="false"
+              v-show="!currentCard.audio"
+              @vdropzone-sending="audioSendingEvent"
+              @vdropzone-success="audioSuccess"
+            >
+            </vue-dropzone>
+            <div v-show="audioUploadPercent && audioUploadPercent !== 100">Uploading: {{audioUploadPercent}}%</div>
+            <div class="flex flex--aligned" v-show="currentCard.audio">
+              <audio controls ref="audio" style="flex: 1"></audio>
+              <i class="fal fa-trash-alt btn btn--icon LearningCard__delete-audio" @click="removeAudio"></i>
+            </div>
+          </div>
+          <div class="form__group">
+            <label class="label" for="VideoDropzone">Video</label>
+            <vue-dropzone
+              id="VideoDropzone"
+              ref="VideoDropzone"
+              class="Dropzone Dropzone--video"
+              v-show="!currentCard.video"
+              :options="videoDropzoneOptions"
+              :includeStyling="false"
+              :awss3="awss3"
+              @vdropzone-sending="sendingEvent"
+              @vdropzone-success="videoSuccess"
+              @vdropzone-s3-upload-error="s3UploadError"
+              @vdropzone-s3-upload-success="s3UploadSuccess"
+            ></vue-dropzone>
+            <ProgressBar v-show="videoIsUploading" :total="100" :completed="videoUploadPercent" />
+            <div class="LearningCard__video" v-show="currentCard.video">
+              <video controls ref="video"></video>
+              <div class="btn btn--standard" @click="removeVideo">Remove video</div>
+            </div>
+          </div>
+          <div class="form__group">
+            <label class="label" for="currentCard.content">Content</label>
+            <froala :tag="'textarea'" :config="contentConfig" v-model="content"></froala>
+          </div>
+          <div class="form__group">
+            <label class="label" for="currentCard.task">Practical Task</label>
+            <froala :tag="'textarea'" :config="evidenceConfig" v-model="evidence"></froala>
+          </div>
+        </div>
+      </div>
+      <h3>Quiz</h3>
+      <QuizBuilder></QuizBuilder>
+    </form>
+  </div>
+  <div class="LearningCard__mobile" v-if="currentCard">
+    <div class="marvel-device nexus5">
+      <div class="top-bar"></div>
+      <div class="sleep"></div>
+      <div class="volume"></div>
+      <div class="camera"></div>
+      <div class="screen">
+        <div class="Mobile__screen">
+          <div class="Mobile__header">
+            <h4 class="flat">{{ name }}</h4>
+            <div v-show="currentCard.audio">
+              <AudioPlayer ref="player"></AudioPlayer>
+            </div>
+          </div>
+          <div class="Mobile__hero">
+            <div class="Mobile__video" v-show="currentCard.video">
+              <video controls ref="mobileVideo"></video>
+            </div>
+          </div>
+          <div class="Mobile__content">
+            <div v-if="content">
+              <froalaView v-model="content"></froalaView>
+            </div>
+            <div class="Mobile__content-task" v-if="evidence">
+              <h2>Practical task</h2>
+              <p class="small">Your trainer has assigned a practical task for this card. This task will help you further understand the content shared in this card.</p>
+              <div class="well">
+                <froalaView v-model="evidence"></froalaView>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="Mobile__footer">
+          <div class="btn btn--standard" @click="quizVisible = true" v-show="quiz.length">Take quiz</div>
+          <div class="btn btn--standard" v-show="!quiz.length">Next card</div>
+        </div>
+        <div :class="{ 'Mobile__modal': true, 'Mobile__modal--visible' : quizVisible }">
+          <div class="Mobile__quiz">
+            <Quiz @finish="quizVisible = false" @close="quizVisible = false" :preview="true" :questions="quiz"></Quiz>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div v-if="ready" hidden>ready</div>
+</div>

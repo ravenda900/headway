@@ -1,0 +1,10 @@
+Hi,
+
+You have been invited to Grow2.
+
+If the above link does not work, paste the following URL in your browser:
+
+http://www.grow2.com.au/invite?token={{token}}
+
+Regards,
+Grow2

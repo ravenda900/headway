@@ -1,0 +1,6 @@
+Welcome {{name}},
+
+http://www.grow2.com.au/confirm?token={{token}}
+
+Regards,
+Grow2
