@@ -51,7 +51,7 @@
             <h1 class="hero__title">Build high performing <br /><span id="looped">sporting</span> clubs</h1>
             <p>Grow2 provides a multi featured platform to help sporting clubs create content. Our vision is to help your club build culture, skills, progression plans, facility information and much more. This information can be stored and delivered directly to anyone in your club</p>
             <div class="hero__btns">
-              <a href="#signup-section" class="btn">Begin free trial</a>
+              <a href="#signup-section" class="btn">Sign up now</a>
               <a href="#pricing-section" class="btn btn--secondary">See pricing</a>
             </div>
           </div>
@@ -188,40 +188,30 @@
             </div>
             <div class="pricing">
               <div class="pricing__plans">
+                {{#each products}}
                 <div class="pricing-col">
                   <div class="pricing-col__header">
-                    <h3 class="pricing-col__title flat">Founding club</h3>
-                    <small>Be one of the first 100 clubs to join</small>
+                    <h3 class="pricing-col__title flat">{{name}}</h3>
+                    <small>{{description}}</small>
                   </div>
                   <div class="pricing-col__value pricing-col__value--price">
                     <div class="pp">
-                      <strong class="pp__value">$100<b>/</b></strong>
-                      <div class="pp__meta"><i>month</i><span>ex. GST</span></div>
-                    </div>
-                    <div class="pp pp--strike">
-                      <strong class="pp__value">$200<b>/</b></strong>
-                      <div class="pp__meta"><i>month</i><span>ex. GST</span></div>
+                      <strong class="pp__value">${{price}}<b>/</b></strong>
+                      <div class="pp__meta">month</div>
                     </div>
                   </div>
                   <div class="pricing-col__features">
                     <ul class="flat unstyled pricing-col__list">
-                      <li>1 Content Creator</li>
-                      <li>Unlimited video</li>
-                      <li>Unlimited audio</li>
-                      <li>Unlimited members</li>
-                      <li>Committee meeting template</li>
-                      <li>Club history template</li>
-                      <li>12 months field maintenance content</li>
-                      <li class="pricing-col__break">How to guides</li>
-                      <li>1hr video call</li>
-                      <li>Access to group forum</li>
-                      <li>Continued content from sporting bodies</li>
+                      {{#each features}}
+                        <li>{{this}}</li>
+                      {{/each}}
                     </ul>
                   </div>
-                  <div class="pricing-col__footer">
-                    <a href="#signup-section" class="btn">Begin 30 day trial</a>
-                  </div>
+                  {{!-- <div class="pricing-col__footer">
+                    <button class="btn" onClick="setPlan('{{price_id}}', '{{name}}')">Begin 30 day trial</button>
+                  </div> --}}
                 </div>
+                {{/each}}
               </div>
             </div>
           </div>
@@ -236,8 +226,17 @@
               <img src="landing/images/logo-circle.svg" alt="Grow2" class="logo__img logo__img--large">
             </div>
             <div class="text-centered">
-              <h2 class="pressed hero__title">Begin your free trial</h2>
+              <h2 class="pressed hero__title">Sign up now!</h2>
               <p>30 day free trial. No credit card required.</p>
+            </div>
+            <div class="form__group">
+              <label for="signup-plan">Plan</label>
+              <select id="signup-plan" class="input">
+                {{#each products}}
+                  <option value="{{price_id}}">{{name}}</option>
+                {{/each}}
+              </select>
+              {{!-- <input type="text" class="input" id="signup-plan" placeholder="Choose a plan above" autocomplete="off" readonly> --}}
             </div>
             <div class="form__group">
               <label for="signup-first">First name</label>
@@ -366,6 +365,13 @@
 
       });
 
+      function setPlan (priceId, productName) {
+        document.getElementById('signup-price').value = priceId;
+        document.getElementById('signup-plan').value = productName;
+        location.hash = "";
+        location.hash = '#signup-section';
+      };
+
       document.getElementById("signup-form").addEventListener("submit", function(e) {
         e.preventDefault();
         const email = document.getElementById('signup-email').value;
@@ -376,6 +382,7 @@
             name: document.getElementById('signup-company').value,
             first_name: document.getElementById('signup-first').value,
             last_name: document.getElementById('signup-last').value,
+            price: document.getElementById('signup-price').value,
             email: email
           },
           beforeSend: function() {

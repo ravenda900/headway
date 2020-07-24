@@ -3,12 +3,18 @@ import connection from './connection'
 
 import { Business, Card, Course, Mentor, Student, Unit, Admin, BusinessStudent, BusinessCourse, CourseStudent, Activity, Notification } from './models'
 import { createAdmin, createStudent, createMentor } from './actions'
-import { hashPasswordSync } from './authentication';
+import { hashPasswordSync } from './authentication'
+import { STRIPE_SECRET } from './constants'
+import { stripLow } from 'validator'
+import { Logger } from './logger'
 
 // Data
 const admins = require('../data/admins.json')
 const students = require('../data/students.json')
 const cards = require('../data/cards.json')
+const subscription_plans = require('../data/subscription_plans.json')
+
+const stripe = require('stripe')(STRIPE_SECRET)
 
 const done = () => {
   connection.close()
@@ -16,21 +22,81 @@ const done = () => {
 }
 
 const main = async () => {
+  
+  try {
+    const limit = { limit: 100 }
+    
+    for await (const subscription of stripe.subscriptions.list(limit)) {
+      const delSub = await stripe.subscriptions.del(subscription.id)
+      if (delSub) {
+        Logger.info(`Subscription with id ${delSub.id} has been cancelled`)
+      }
+    }
+    for await (const customer of stripe.customers.list(limit)) {
+      const delCustomer = await stripe.customers.del(customer.id)
+      if (delCustomer.deleted) {
+        Logger.info(`Customer with id ${delCustomer.id} has been deleted`)
+      }
+    }
+    for await (const price of stripe.prices.list(limit)) {
+      const delPrice = await stripe.plans.del(price.id)
+      if (delPrice.deleted) {
+        Logger.info(`Price with id ${delPrice.id} has been deleted`)
+      }
+    }
+    for await (const product of stripe.products.list(limit)) {
+      const delProduct = await stripe.products.del(product.id)
+      if (delProduct.deleted) {
+        Logger.info(`Product with id ${delProduct.id} has been deleted`)
+      }
+    }
+    for (let i = 0 ; i < subscription_plans.length ; i++) {
+      const sp = subscription_plans[i]
+      const product = await stripe.products.create({
+        name: sp.name,
+        description: sp.description,
+        metadata: {
+        ...sp.features,
+          price: sp.price
+        }
+      })
+      Logger.info(`Product with id ${product.id} has been created`)
+      const price = await stripe.prices.create({
+        unit_amount: sp.price * 100,
+        currency: 'usd',
+        recurring: {
+          interval: 'month'
+        },
+        product: product.id,
+      })
+      Logger.info(`Price with id ${price.id} has been created`)
+      const updateProduct = await stripe.products.update(product.id, {
+        metadata: {
+          ...product.metadata,
+          price_id: price.id
+        }
+      })
+      Logger.info(`Product with id ${updateProduct.id} has been updated`)
+    }
+  } catch (e) {
+    console.error(e)
+  }
+
   if (!process.env.SAMPLE_DATA) {
     // TODO: once admin registration exists, this can be removed
     const password = hashPasswordSync('password')
     const name = 'EZ Training'
-    Admin.create({
+    const admin = await Admin.create({
       id: 1,
       name,
       email: 'root@root',
       password,
-    }).then(admin => {
-      Business.create({
-        name,
-        adminId: admin.id
-      }).then(done)
     })
+    await Business.create({
+      name,
+      adminId: admin.id
+    })
+    done()
     return
   }
   console.log('Loading sample data')
@@ -66,9 +132,8 @@ const main = async () => {
 }
 
 const reset = async () => {
-  return await connection.sync({ force: true }).then(() => {
-    main()
-  })
+  await connection.sync({ force: true })
+  await main()
 }
 
 if (process.argv.pop() === '-run') {

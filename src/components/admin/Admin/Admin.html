@@ -18,7 +18,22 @@
               <small class="Logo__small"> {{totalStudents}} members</small>
             </div>
           </router-link>
-          <stripe-checkout
+          <div class="Admin__banner" v-show="subscriptionStatus === 'trialing'" @click="upgrade">
+            Trial ends in {{ trialEnds }} days
+            <stripe-checkout
+              ref="checkoutRef"
+              :pk="publishableKey"
+              :items="items"
+              :successUrl="successUrl"
+              :cancelUrl="cancelUrl"
+            >
+              <template slot="checkout-button">
+                <button class="Admin__upgrade">Upgrade now</button>
+              </template>
+            </stripe-checkout>
+            <i class="fas fa-exclamation-square Admin__warning"></i>
+          </div>
+          <!-- <stripe-checkout
             ref="checkoutRef"
             :pk="publishableKey"
             :items="items"
@@ -32,7 +47,7 @@
                 <i class="fas fa-exclamation-square Admin__warning"></i>
               </div>
             </template>
-          </stripe-checkout>
+          </stripe-checkout> -->
           <div class="Admin__banner Admin__banner--angry" v-show="subscriptionStatus === 'past_due'" @click="upgrade">
             Payment overdue. Pay immediately.
             <span class="Admin__upgrade">Pay now</span>

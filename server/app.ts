@@ -5,15 +5,16 @@ import * as exphbs from 'express-handlebars'
 import * as passport from 'passport'
 import * as epilogue from 'epilogue'
 import * as bodyParser from 'body-parser'
-import { SESSION_CONFIG } from './constants'
+import { SESSION_CONFIG, STRIPE_SECRET } from './constants'
 import * as httpsRedirect from 'express-https-redirect'
+import connection from './connection'
 
 const session = require('express-session')
 const SequelizeStore = require('connect-session-sequelize')(session.Store)
+const stripe = require('stripe')(STRIPE_SECRET)
 
 // Init Express Server
 const app = express()
-import connection from './connection'
 
 // View Engine
 const hbs = exphbs.create({})
@@ -24,6 +25,7 @@ app.engine('handlebars', hbs.engine)
 // Middleware
 import { cors } from './middleware'
 import { checkAdminLogin, checkStudentLogin } from './authentication'
+import { Logger } from './logger'
 const staticRoute = express.static(path.resolve('./dist'))
 app.use('/', httpsRedirect())
 
@@ -62,8 +64,22 @@ app.use('/s/*', staticRoute)
 app.use('/b/*', checkAdminLogin)
 app.use('/b/*', staticRoute)
 
-app.get('/', (req, res) => {
-  res.render('index')
+app.get('/', async (req, res) => {
+  const subscription_plans = []
+  for await (const product of stripe.products.list({limit: 3})) {
+    const keys = Object.keys(product.metadata)
+    const features = keys.filter(k => k !== 'price' && k !== 'price_id').map(k => {
+      return product.metadata[k]
+    })
+    product.price = product.metadata.price
+    product.price_id = product.metadata.price_id
+    product.features = features
+    delete product.metadata
+    subscription_plans.push(product)
+  }
+  res.render('index', {
+    products: subscription_plans.reverse()
+  })
 })
 
 app.use('/assets', express.static(path.resolve('./dist/assets')))

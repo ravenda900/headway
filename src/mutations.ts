@@ -1,4 +1,6 @@
 import { assign } from 'lodash'
+import { BASE_URL } from './constants'
+import * as io from 'socket.io-client'
 
 export const mutations = {
     dashboardLoading(state, loading) {
@@ -211,5 +213,10 @@ export const mutations = {
     //     console.log('studentIndex', studentIndex)
     //   }
     // })
+    },
+    setSocket(state, email) {
+        state.socket = io(`${BASE_URL}/socket/student?email=${window.encodeURIComponent(email)}`, {
+            path: '/headway'
+        })
     }
 }

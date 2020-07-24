@@ -16,17 +16,17 @@ export const actions = {
             if (!includes(OK_STATUS, status)) {
                 console.warn('Bad stripe status', status)
             }
-            // if (!status) {
-            //     context.commit('setSubscriptionStatus', 'deleted')
-            // } else {
-                context.commit('setSubscriptionStatus', OK_STATUS[1])
-            // }
+            if (!status) {
+                context.commit('setSubscriptionStatus', 'deleted')
+            } else {
+                context.commit('setSubscriptionStatus', status)
+            }
             if ((status === 'trialing' || status === 'past_due') && trial_end) {
                 const ends = trial_end ? moment(trial_end * 1000).toDate() : null
                 const now = moment()
                 context.commit('set', {
                     key: 'subscription',
-                    value: { ends },
+                    value: subscriptionResponse.data.subscriptions,
                 })
             }
         })
@@ -57,6 +57,8 @@ export const actions = {
 
     getStudent(context) {
         return axios.get(BASE_URL + '/student').then(res => {
+            const notifications = res.data.notifications
+            res.data.notifications = notifications.reverse()
             context.commit('setStudent', res.data)
             return res.data
         })
@@ -218,6 +220,7 @@ export const actions = {
         return axios.post(BASE_URL + '/admin/student', payload).then(res => {
             const data = res.data
             
+            context.state.socket.emit('notify-student')
             context.commit('setNotification', {
                 type: 'success',
                 title: data.studentExists ? 'Student enrolled' : 'Student invited',
@@ -230,6 +233,7 @@ export const actions = {
 
     addStudentCourse(context, payload) {
         return axios.post(BASE_URL + '/admin/student-course', payload).then(res => {
+            context.state.socket.emit('notify-student')
             context.dispatch('getStudentProfile', payload.studentId)
 
             payload.courseIds.forEach((courseId, i) => {
@@ -244,6 +248,7 @@ export const actions = {
 
     removeStudentFromCourse(context, payload) {
         return axios.delete(BASE_URL + '/admin/student-course', { data: payload }).then(res => {
+            context.state.socket.emit('notify-student')
             context.dispatch('getStudentProfile', payload.studentId)
 
             context.dispatch('adminCreateStudentActivity', {
@@ -271,6 +276,7 @@ export const actions = {
 
     removeStudentFromBusiness(context, payload) {
         return axios.delete(BASE_URL + '/admin/student-business', { data: payload }).then(res => {
+            context.state.socket.emit('notify-student')
             context.dispatch('getStudentProfile', payload.studentId)
 
             context.dispatch('adminCreateStudentActivity', {
@@ -362,6 +368,7 @@ export const actions = {
     removeCourse(context, id) {
         id = parseInt(id)
         return axios.delete(BASE_URL + '/api/course/' + id).then(res => {
+            context.state.socket.emit('notify-student')
             context.commit('removeCourse', id)
             context.commit('setNotification', {
                 title: 'Content Removed'
@@ -371,6 +378,7 @@ export const actions = {
 
     removeStudent(context, id) {
         return axios.delete(BASE_URL + '/admin/student/' + id).then(res => {
+            context.state.socket.emit('notifiy-student')
             context.dispatch('getAdmin')
             context.commit('setNotification', {
                 title: 'Member removed'
@@ -380,6 +388,7 @@ export const actions = {
 
     removeBusiness(context, id) {
         return axios.delete(BASE_URL + '/api/business/' + id).then(res => {
+            context.state.socket.emit('notify-student')
             context.dispatch('getAdmin')
             context.commit('setNotification', {
                 title: 'Team removed'

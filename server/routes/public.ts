@@ -1,10 +1,9 @@
 import * as jwt from 'jsonwebtoken'
 import * as passwordGenerator from 'generate-password'
-import * as Stripe from 'stripe'
 
 import app from '../app'
 import { createAdmin } from '../actions'
-import { PASSWORD_OPTS, JWT_ISSUER } from '../constants'
+import { PASSWORD_OPTS, JWT_ISSUER, STRIPE_SECRET } from '../constants'
 import { authAdmin, authStudent, authAdminInvite, hashPassword } from '../authentication'
 import mailer from '../mailer'
 import mail from '../mail'
@@ -13,7 +12,7 @@ import { Business, Card, Course, Mentor, Student, Unit, Admin, BusinessStudent, 
 
 const SERVER_STARTUP = new Date()
 
-const stripe = new Stripe(process.env.STRIPE_SECRET)
+const stripe = require('stripe')(STRIPE_SECRET)
 
 const slack = require('slack-notify')(process.env.MY_SLACK_WEBHOOK_URL)
 
@@ -49,7 +48,8 @@ app.post('/register', (req, res) => {
     const token = jwt.sign({
       sub: admin.id,
       name: admin.name,
-      firstName: req.body.first_name,
+      firstName: admin.first_name,
+      lastName: admin.last_name,
       email: admin.email,
       iss: JWT_ISSUER,
       userType: 'admin',
@@ -63,7 +63,7 @@ app.post('/register', (req, res) => {
     const mailData = {
       token,
       name: data.name,
-      first_name: req.body.first_name,
+      first_name: admin.first_name,
     }
     mailer.messages().send({
       to: admin.email,
@@ -77,18 +77,27 @@ app.post('/register', (req, res) => {
       }
     })
 
-    // Create stripe subscription
     stripe.customers.create({
-      email: admin.email
-    }).then(customer => {
-      const subscription = stripe.subscriptions.create({
-        customer: customer.id,
-        items: [{ plan: process.env.STRIPE_PLAN }],
-        trial_period_days: 30,
-      })
-      admin.stripe_cust_id = customer.id
-      return admin.save()
-    })
+      email: admin.email,
+      name: `${admin.first_name} ${admin.last_name}`,
+      description: `Admin for ${admin.name} Club`
+    }, (err, customer) => {
+        if (err) {
+          console.warn(err)
+        } else {
+          stripe.subscriptions.create({
+            customer: customer.id,
+            items: [{
+              price: req.body.price
+            }],
+            trial_period_days: 30
+          })
+
+          admin.stripe_cust_id = customer.id
+          return admin.save()
+        }
+      }
+    )
 
     // slack.alert({
     // text: 'New Admin registration',

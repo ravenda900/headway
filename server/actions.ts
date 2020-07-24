@@ -12,12 +12,14 @@ import mail from './mail'
 import { hashPasswordSync } from './authentication';
 
 export const createAdmin = (data) => {
-  const { email, name } = data
+  const { email, name, first_name, last_name } = data
   const password = hashPasswordSync(data.password)
   return Admin.findOne({ where: { email } }).then(admin => {
     if (!admin) {
       return Admin.create({
         name,
+        first_name,
+        last_name,
         email,
         password,
       })

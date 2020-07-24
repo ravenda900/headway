@@ -30,10 +30,6 @@
       <button class="Notification__trigger" v-else key="off" @click="show = true">
         <i class="fal fa-bell Notification__icon"></i>
         <span class="Notification__badge">{{ notificationCount }}</span>
-        <!-- <svg viewBox="0 0 24 24" class="header--icon">
-          <title>Navigation Menu</title>
-          <path fill="currentColor" d="M6,8c1.1,0 2,-0.9 2,-2s-0.9,-2 -2,-2 -2,0.9 -2,2 0.9,2 2,2zM12,20c1.1,0 2,-0.9 2,-2s-0.9,-2 -2,-2 -2,0.9 -2,2 0.9,2 2,2zM6,20c1.1,0 2,-0.9 2,-2s-0.9,-2 -2,-2 -2,0.9 -2,2 0.9,2 2,2zM6,14c1.1,0 2,-0.9 2,-2s-0.9,-2 -2,-2 -2,0.9 -2,2 0.9,2 2,2zM12,14c1.1,0 2,-0.9 2,-2s-0.9,-2 -2,-2 -2,0.9 -2,2 0.9,2 2,2zM16,6c0,1.1 0.9,2 2,2s2,-0.9 2,-2 -0.9,-2 -2,-2 -2,0.9 -2,2zM12,8c1.1,0 2,-0.9 2,-2s-0.9,-2 -2,-2 -2,0.9 -2,2 0.9,2 2,2zM18,14c1.1,0 2,-0.9 2,-2s-0.9,-2 -2,-2 -2,0.9 -2,2 0.9,2 2,2zM18,20c1.1,0 2,-0.9 2,-2s-0.9,-2 -2,-2 -2,0.9 -2,2 0.9,2 2,2z" />
-        </svg> -->
       </button>
     </transition>
     <!-- Dropdown Menu -->
@@ -45,7 +41,8 @@
           </li>
           <li class="dropdown__menu-item" v-for="notification in notifications">
             <a href="#" class="dropdown__menu-link">
-              <div class="dropdown__menu-text" v-html="notification.message"></div>
+              <p class="dropdown__menu-text" v-html="notification.message"></p>
+              <small class="dropdown__menu-desc">{{ notification.createdAt | moment('from') }}</small>
             </a>
           </li>
         </ul>

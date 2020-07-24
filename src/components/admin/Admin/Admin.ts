@@ -15,7 +15,7 @@ import './Admin.scss'
 import store from '../../../store'
 import axios from 'axios'
 
-import { STRIPE_PUBLSHABLE_KEY } from '../../../constants'
+import { STRIPE_PUBLISHABLE_KEY } from '../../../constants'
 
 const toggleModal = k => store.commit('toggleModal', k)
 
@@ -79,15 +79,10 @@ export class Admin extends Vue {
     @State subscriptionStatus
     @State dashboardLoading
 
-    successUrl = 'https://www.grow2.com.au/dashboard'
-    cancelUrl = 'https://www.grow2.com.au/dashboard'
-    publishableKey = STRIPE_PUBLSHABLE_KEY
-    items = [
-        {
-            'plan': 'price_HLydOMNaNe8DJY',
-            'quantity': 1
-        }
-    ]
+    successUrl = `${window.location.origin}/dashboard`
+    cancelUrl = `${window.location.origin}/dashboard`
+    publishableKey = STRIPE_PUBLISHABLE_KEY
+    items = []
 
     $checkout: any
 
@@ -98,6 +93,13 @@ export class Admin extends Vue {
         } else {
             document.removeEventListener('click', this.toggleSidebar)
         }
+    }
+    @Watch('subscription')
+    watchSubscription(newVal, oldVal) {
+        this.items.push({
+            plan: newVal.data[0].plan.id,
+            quantity: 1
+        })
     }
 
     @Watch('subscriptionStatus')
@@ -116,8 +118,10 @@ export class Admin extends Vue {
     }
 
     get trialEnds() {
-        if (this.subscription.ends) {
-            return moment(this.subscription.ends).diff(new Date, 'days')
+        if (this.subscription && this.subscription.data.length > 0) {
+            const trial_end =  moment(this.subscription.data[0].trial_end * 1000).toDate() 
+           
+            return moment(trial_end).diff(new Date, 'days')
         }
         return '?'
     }

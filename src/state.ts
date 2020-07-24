@@ -2,6 +2,7 @@ export const state = {
     authed: false,
     dashboardLoading: true,
     subscriptionStatus: null,
+    socket: null,
     student: {
         courses: [],
     },
@@ -50,5 +51,5 @@ export const state = {
     removeUnitId: null,
     removeCardId: null,
     addCardUnitId: null,
-    subscription: {},
+    subscription: null,
 }

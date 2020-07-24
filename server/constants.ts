@@ -1,3 +1,5 @@
+import app from './app'
+
 export const PASSWORD_OPTS = {
   uppercase: false,
   numbers: true,
@@ -26,10 +28,4 @@ export const SESSION_CONFIG = {
   saveUninitialized: false,
 }
 
-export const PUSHER = new (require('pusher'))({
-    appId: process.env.PUSHER_APP_ID,
-    key: process.env.PUSHER_KEY,
-    secret: process.env.PUSHER_SECRET,
-    cluster: process.env.PUSHER_CLUSTER,
-    useTLS: process.env.PUSHER_USE_TLS
-})
+export const STRIPE_SECRET = process.env.STRIPE_SECRET

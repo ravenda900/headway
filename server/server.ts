@@ -12,9 +12,24 @@ import { PORT } from './constants'
 import { Logger } from './logger'
 
 const startServer = () => {
-  const server = app.listen(PORT)
-  server.setTimeout(500000)
-  Logger.info(`headway started @ ${(new Date()).toLocaleString()}\nhttp://localhost:${PORT}\n`)
+  const server = app.listen(PORT, () => {
+    Logger.info(`headway started @ ${(new Date()).toLocaleString()}\nhttp://localhost:${PORT}\n`)
+  })
+  const io = require('socket.io').listen(server, {
+    path: '/headway'
+  })
+  const student = io.of('/socket/student')
+  student.on('connect', socket => {
+    Logger.info(`Student with email ${socket.handshake.query.email} connected...`)
+    socket.on('notify-student', () => {
+      io.binary(false).emit('update-student')
+    })
+    
+    socket.on('disconnect', reason => {
+      Logger.info(`Student with email ${socket.handshake.query.email} disconnected...`)
+    })
+  })
+  
 }
 
 const debug = async () => {

@@ -36,12 +36,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  cursor: pointer;
   transition: all 200ms ease;
   &:hover {
     background: lighten($orange, 1);
   }
-  span {
+  button {
     display: none;
     font-size: 11px;
     color: #fff;
@@ -49,6 +48,8 @@
     border-radius: 4px;
     padding: 4px 8px;
     animation: fadeIn 200ms ease;
+    background-color: transparent;
+    cursor: pointer;
   }
   i { margin-right: 4px }
 }
@@ -289,7 +290,7 @@
   }
 
   .Admin__banner i { display: none }
-  .Admin__banner span { display: block }
+  .Admin__banner button { display: block }
 
   .Admin__logout {
     transform: none;

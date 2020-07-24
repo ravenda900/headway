@@ -110,7 +110,6 @@
   right: 0;
   position: absolute;
   z-index: 10;
-  height: 25rem;
   min-width: 300px;
   margin-top: 1rem;
   overflow-y: auto;
@@ -118,15 +117,14 @@
   border: 1px solid var(--color-gray);
   background-clip: padding-box;
   font-size: 14px;
+  box-shadow: $boxShadowFloat;
   &-link {
     display: flex;
-    align-items: center;
     justify-content: flex-start;
     text-decoration: none;
     color: #2e4375;
-    padding: 0.8rem 0;
-    margin-top: 0.2rem;
-    margin-bottom: 0.2rem;
+    padding: 1rem 0 0.5rem 0;
+    flex-direction: column;
     &:hover {
       background-color: #fafafa;
     }
@@ -136,9 +134,14 @@
     margin: 0;
   }
   &-text {
-    font-weight: 300;
     margin-left: 1rem;
     margin-right: 1rem;
+    margin-bottom: 0;
+  }
+  &-desc {
+    margin: 0.2rem 1rem;
+    color: #999;
+    font-size: .8em;
   }
   &-item:not(:last-child) {
     border-bottom: 1px solid #ddd;

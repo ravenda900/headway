@@ -22,6 +22,7 @@ export class AddStudent extends Vue {
 
     @State businesses
     @State modals
+    @State socket
 
     @State activeBusinessProfile
     @Watch('activeBusinessProfile', { deep: true })

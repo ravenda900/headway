@@ -2,7 +2,7 @@ import * as epilogue from 'epilogue'
 
 import { authEpilogue } from '../authentication'
 
-import { Admin, Activity, Card, Course, Student, Unit, Business, BusinessCourse } from '../models'
+import { Admin, Activity, Card, Course, Student, Unit, Business, BusinessCourse, Notification } from '../models'
 import { Logger } from '../logger'
 
 const authRest = (authorize) => (req, res, context) => {
@@ -100,3 +100,4 @@ createRestApi(Card, 'card', (req, res, context, resolve) => {
     }
   })
 })
+

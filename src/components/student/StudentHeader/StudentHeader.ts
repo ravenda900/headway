@@ -16,7 +16,7 @@ import store from '../../../store'
 })
 
 export class StudentHeader extends Vue {
-    show: boolean = false
+    show = false
     @Getter activeStudentCourse
     @Getter activeStudentUnitName
     @State activeStudentCard
