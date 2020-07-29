@@ -1,9 +1,10 @@
-<div id="dashboard" class="Admin" :class="{ 'Admin--mask': !isActive }" v-if="ready">
-  <div class="Admin__expired Wallpaper" v-if="isActive">
+<div id="dashboard" class="Admin" :class="{ 'Admin--mask': !isNotActive }" v-if="ready">
+  <notifications group="admin_notifs" position="bottom right" />
+  <div class="Admin__expired Wallpaper" v-if="isNotActive">
     <div class="container text-centered">
       <h1>Hmm&hellip; seems your account has expired</h1>
       <p>Your account has expired and you did not enter any payment information. If you wish to continue using Grow2 you must resolve your payment.</p>
-      <p><button class="btn" @click="redirectToCheckout">Pay now</button></p>
+      <p><button class="btn">Pay now</button></p>
     </div>
   </div>
   <div class="Admin__content" v-else>
@@ -23,21 +24,6 @@
             <router-link to="/subscription-plans" class="Admin__upgrade">Upgrade now</router-link>
             <i class="fas fa-exclamation-square Admin__warning"></i>
           </div>
-          <!-- <stripe-checkout
-            ref="checkoutRef"
-            :pk="publishableKey"
-            :items="items"
-            :successUrl="successUrl"
-            :cancelUrl="cancelUrl"
-            >
-            <template slot="checkout-button">
-              <div class="Admin__banner" v-show="subscriptionStatus === 'trialing'" @click="upgrade">
-                Trial ends in {{ trialEnds }} days
-                <span class="Admin__upgrade">Upgrade now</span>
-                <i class="fas fa-exclamation-square Admin__warning"></i>
-              </div>
-            </template>
-          </stripe-checkout> -->
           <div class="Admin__banner Admin__banner--angry" v-show="subscriptionStatus === 'past_due'" @click="redirectToCheckout">
             Payment overdue. Pay immediately.
             <button class="Admin__upgrade">Pay now</button>

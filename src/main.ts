@@ -39,6 +39,7 @@ Vue.component('Tab', Tab)
 Vue.use(Notifications)
 Vue.directive('focus', focus)
 
+
 Vue.use(VueFroala)
 
 Vue.use(require('vue-moment'))
@@ -49,34 +50,6 @@ Vue.use(VueAnalytics, {
     trackingId: 'UA-110929649-2',
     vueRouter: router,
 })
-
-
-declare module 'vue-stripe-checkout' {
-    export class StripeCheckout extends Vue {
-        pk: string
-        items: any[]
-        successUrl: string
-        cancelUrl: string
-        submitType: string
-        billingAddressCollection: string
-        clientReferenceId: string
-        customerEmail: string
-        sessionId: string
-        locale: string
-
-        redirectToCheckout(): void
-    }
-
-    export class StripeElements extends Vue {
-        pk: string
-        amount: number
-        stripeAccount: string
-        apiVersion: string
-        locale: string
-
-        submit(): HTMLElement
-    }
-}
 
 declare module 'vue/types/vue' {
     interface Vue {

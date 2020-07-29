@@ -3,8 +3,6 @@ import { State, Getter, Mutation } from 'vuex-class'
 
 import * as moment from 'moment'
 
-import { StripeCheckout } from 'vue-stripe-checkout'
-
 import { CourseService, BusinessService, StudentService, UnitService } from '../../../services'
 
 import { AddStudent, AddStudentBusiness, AddStudentCourse, AddUnit, AddCard, AddBusiness, Breadcrumbs, StudentList, StudentProfile, Toast, BusinessProfile, LearningCard, Course, Businesses, CourseMenu, RemoveStudentCourse, RemoveStudentBusiness, AddCourse, RemoveCard, RemoveVideo, RemoveAudio, RemoveBusiness, RemoveStudent, RemoveCourse, RemoveUnit, RemoveBusinessCourse, AddBusinessCourse, SubscriptionPlanList } from '../../'
@@ -14,8 +12,6 @@ import { Login } from '../../shared/Login'
 import './Admin.scss'
 import store from '../../../store'
 import axios from 'axios'
-
-import { STRIPE_PUBLISHABLE_KEY } from '../../../constants'
 
 const toggleModal = k => store.commit('toggleModal', k)
 
@@ -51,7 +47,6 @@ const toggleModal = k => store.commit('toggleModal', k)
         StudentList,
         StudentProfile,
         Toast,
-        StripeCheckout,
         SubscriptionPlanList
     }
 })
@@ -79,10 +74,6 @@ export class Admin extends Vue {
     @State sidebarOpen
     @State subscription
     @State dashboardLoading
-
-    successUrl = `${window.location.origin}/dashboard`
-    cancelUrl = `${window.location.origin}/dashboard`
-    publishableKey = STRIPE_PUBLISHABLE_KEY
     ready = false
 
     $checkout: any
@@ -96,29 +87,11 @@ export class Admin extends Vue {
         }
     }
 
-    // @Watch('subscriptionStatus')
-    // watchTrialExpired(newVal, oldVal) {
-    //     if (newVal !== 'trialing' && newVal !== 'active' && newVal !== 'past_due') {
-    //         this.$refs.paywall.removeAttribute('hidden')
-    //         this.$refs.wrapper.classList.add('Admin--mask')
-    //     }
-    // }
-
     $refs: {
-        checkoutRef: any
         course: any
     }
 
-    // get trialEnds() {
-    //     if (this.subscriptions && this.subscriptions.data.length > 0) {
-    //         const trial_end =  moment(this.subscriptions.data[0].trial_end * 1000).toDate() 
-           
-    //         return moment(trial_end).diff(new Date, 'days')
-    //     }
-    //     return '?'
-    // }
-
-    get isActive() {
+    get isNotActive() {
         return this.subscriptionStatus !== 'active' && this.subscriptionStatus !== 'past_due'
     }
 
@@ -211,11 +184,22 @@ export class Admin extends Vue {
         store.commit('toggleSidebar')
     }
 
-    redirectToCheckout() {
-        this.$refs.checkoutRef.redirectToCheckout()
-    }
-
     mounted() {
+        const params = new URLSearchParams(window.location.search)
+        if (params.has('session_id')) {
+            store.dispatch('getCheckoutSession', params.get('session_id'))
+                .then(session => {
+                    if (!session.error) {
+                        this.$notify({
+                            group: 'admin_notifs',
+                            text: 'Payment successful',
+                            duration: 10000
+                        })
+                    }
+                })
+        }
+
+        
         store.dispatch('getSubscription')
             .then(subscription => {
                 store.dispatch('getSubscriptionProduct', subscription)

@@ -5,16 +5,13 @@ import './SubscriptionPlanList.scss'
 
 import store from '../../../store'
 
-import { StripeCheckout } from 'vue-stripe-checkout'
-
 import { STRIPE_PUBLISHABLE_KEY } from '../../../constants'
+import {loadStripe} from '@stripe/stripe-js'
+import { Logger } from '../../../logger'
 
 @Component({
     template: require('./SubscriptionPlanList.html'),
-    name: 'SubscriptionPlanList',
-    components: {
-        StripeCheckout
-    }
+    name: 'SubscriptionPlanList'
 })
 
 export class SubscriptionPlanList extends Vue {
@@ -27,24 +24,30 @@ export class SubscriptionPlanList extends Vue {
     publishableKey = STRIPE_PUBLISHABLE_KEY
     items = []
 
-    $refs: {
-        checkoutRef: any
-    }
-
     get subscriptionPlanIndex() {
         return this.subscription_plans.findIndex(sp => sp.id === this.subscription.product.id)
     }
 
-    get clientReferenceId() {
-        return this.admin.stripe_cust_id
-    }
+    redirectToCheckout(priceId) {
+        store.dispatch('createCheckoutSession', {
+            successUrl: this.successUrl,
+            cancelUrl: this.cancelUrl,
+            customer: this.admin.stripe_cust_id,
+            priceId
+        })
+            .then(async (checkoutSession) => {
+                const stripe = await loadStripe(STRIPE_PUBLISHABLE_KEY)
 
-    get customerEmail() {
-        return this.admin.email
-    }
-
-    redirectToCheckout(index) {
-        this.$refs.checkoutRef[index].redirectToCheckout()
+                stripe.redirectToCheckout({
+                    sessionId: checkoutSession.id
+                  })
+                  .then(result => {
+                    console.log('result', result)
+                    if (result.error.message) {
+                        Logger.error(result.error.message)
+                    }
+                  })
+            })
     }
 
     mounted() {

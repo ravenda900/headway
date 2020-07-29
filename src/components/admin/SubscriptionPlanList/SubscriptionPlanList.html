@@ -23,20 +23,7 @@
                 </ul>
             </div>
             <div class="pricing-col__footer" v-show="key > subscriptionPlanIndex">
-                <stripe-checkout
-                    ref="checkoutRef"
-                    :pk="publishableKey"
-                    :items="[{
-                        plan: subscription_plan.price_id,
-                        quantity: 1
-                    }]"
-                    :successUrl="successUrl"
-                    :cancelUrl="cancelUrl"
-                    :customerEmail="customerEmail">
-                    <template slot="checkout-button">
-                        <button class="btn" @click.prevent="redirectToCheckout(key)">Upgrade</button>
-                    </template>
-                </stripe-checkout>
+                <button class="btn" @click.prevent="redirectToCheckout(subscription_plan.price_id)">Upgrade</button>
             </div>
             </div>
         </div>

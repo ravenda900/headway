@@ -75,7 +75,18 @@ export const actions = {
             context.commit('setAdmin', admin)
         })
     },
-
+    createCheckoutSession(context, payload) {
+        return axios.post(BASE_URL + '/admin/checkout/session', payload)
+            .then(({ data }) => {
+                return data
+            })
+    },
+    getCheckoutSession(context, sessionId) {
+        return axios.get(BASE_URL + '/admin/checkout/session' + sessionId)
+            .then(({ data }) => {
+                return data
+            })
+    },
     getStudent(context) {
         return axios.get(BASE_URL + '/student').then(res => {
             const notifications = res.data.notifications
