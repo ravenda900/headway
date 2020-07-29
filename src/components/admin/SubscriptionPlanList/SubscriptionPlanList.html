@@ -22,8 +22,11 @@
                     <li v-for="(feature, index) in subscription_plan.features" :key="index">{{ feature }}</li>
                 </ul>
             </div>
-            <div class="pricing-col__footer" v-show="key > subscriptionPlanIndex">
+            <div class="pricing-col__footer" v-if="key > subscriptionPlanIndex">
                 <button class="btn" @click.prevent="redirectToCheckout(subscription_plan.price_id)">Upgrade</button>
+            </div>
+            <div class="pricing-col__footer" v-else-if="subscriptionPlanIndex < key">
+                <button class="btn btn--danger" @click.prevent="redirectToCheckout(subscription_plan.price_id)">Downgrade</button>
             </div>
             </div>
         </div>
