@@ -6,37 +6,58 @@ import * as moment from 'moment'
 
 export const actions = {
     getSubscription(context) {
-        return Promise.all([
-            axios.get(BASE_URL + '/admin/subscription'),
-        ]).then(([subscriptionResponse]) => {
-            const trial_end = get(subscriptionResponse.data, 'subscriptions.data[0].trial_end')
-            const status = get(subscriptionResponse.data, 'subscriptions.data[0].status')
+        return axios.get(BASE_URL + '/admin/subscription')
+            .then(({ data }) => {
+                return data.subscriptions.data[0]
+            // const status = get(data, 'subscriptions.data[0].status')
             // Possible values are trialing, active, past_due, canceled, or unpaid.
-            const OK_STATUS = ['trialing', 'active', 'past_due']
-            if (!includes(OK_STATUS, status)) {
-                console.warn('Bad stripe status', status)
-            }
-            if (!status) {
-                context.commit('setSubscriptionStatus', 'deleted')
-            } else {
-                context.commit('setSubscriptionStatus', status)
-            }
-            if ((status === 'trialing' || status === 'past_due') && trial_end) {
-                const ends = trial_end ? moment(trial_end * 1000).toDate() : null
-                const now = moment()
+            // const OK_STATUS = ['trialing', 'active', 'past_due']
+            // if (!includes(OK_STATUS, status)) {
+            //     console.warn('Bad stripe status', status)
+            // }
+            // if (!status) {
+            //     context.commit('setSubscriptionStatus', 'deleted')
+            // } else {
+            //     context.commit('setSubscriptionStatus', status)
+            // }
+            // context.commit('set', {
+            //     key: 'subscriptions',
+            //     value: data.subscriptions.data[0],
+            // })
+
+            // context.dispatch('getSubscriptionProduct', data.subscriptions.data[0])
+        })
+    },
+    getSubscriptionProduct(context, subscription) {
+        return axios.get(BASE_URL + '/admin/subscription_product/' + subscription.plan.product)
+            .then(({ data }) => {
+                subscription.product = data
                 context.commit('set', {
                     key: 'subscription',
-                    value: subscriptionResponse.data.subscriptions,
+                    value: subscription,
                 })
+            })
+    },
+    getSubscriptionPlans(context) {
+        context.commit('setBreadcrumbs', [
+            {
+                label: 'Subscription Plans',
+                link: { name: 'subscriptionPlans' }
             }
-        })
+        ])
+        return axios.get(BASE_URL + '/admin/subscription_plans')
+            .then(({ data }) => {
+                context.commit('set', {
+                    key: 'subscription_plans',
+                    value: data.reverse()
+                })
+            })
     },
     getAdmin(context) {
         context.commit('dashboardLoading', true)
-        return Promise.all([
-            axios.get(BASE_URL + '/admin'),
-        ]).then(([adminResponse]) => {
-            const admin = adminResponse.data
+        return axios.get(BASE_URL + '/admin')
+            .then(({ data }) => {
+            const admin = data
             admin.courses.forEach(course => {
                 if (course.sortOrder) {
                     const sortOrder = JSON.parse(course.sortOrder)
@@ -220,7 +241,7 @@ export const actions = {
         return axios.post(BASE_URL + '/admin/student', payload).then(res => {
             const data = res.data
             
-            context.state.socket.emit('notify-student')
+            // context.state.socket.emit('notify-student')
             context.commit('setNotification', {
                 type: 'success',
                 title: data.studentExists ? 'Student enrolled' : 'Student invited',
@@ -233,7 +254,7 @@ export const actions = {
 
     addStudentCourse(context, payload) {
         return axios.post(BASE_URL + '/admin/student-course', payload).then(res => {
-            context.state.socket.emit('notify-student')
+            // context.state.socket.emit('notify-student')
             context.dispatch('getStudentProfile', payload.studentId)
 
             payload.courseIds.forEach((courseId, i) => {
@@ -248,7 +269,7 @@ export const actions = {
 
     removeStudentFromCourse(context, payload) {
         return axios.delete(BASE_URL + '/admin/student-course', { data: payload }).then(res => {
-            context.state.socket.emit('notify-student')
+            // context.state.socket.emit('notify-student')
             context.dispatch('getStudentProfile', payload.studentId)
 
             context.dispatch('adminCreateStudentActivity', {
@@ -276,7 +297,7 @@ export const actions = {
 
     removeStudentFromBusiness(context, payload) {
         return axios.delete(BASE_URL + '/admin/student-business', { data: payload }).then(res => {
-            context.state.socket.emit('notify-student')
+            // context.state.socket.emit('notify-student')
             context.dispatch('getStudentProfile', payload.studentId)
 
             context.dispatch('adminCreateStudentActivity', {
@@ -368,7 +389,7 @@ export const actions = {
     removeCourse(context, id) {
         id = parseInt(id)
         return axios.delete(BASE_URL + '/api/course/' + id).then(res => {
-            context.state.socket.emit('notify-student')
+            // context.state.socket.emit('notify-student')
             context.commit('removeCourse', id)
             context.commit('setNotification', {
                 title: 'Content Removed'
@@ -388,7 +409,7 @@ export const actions = {
 
     removeBusiness(context, id) {
         return axios.delete(BASE_URL + '/api/business/' + id).then(res => {
-            context.state.socket.emit('notify-student')
+            // context.state.socket.emit('notify-student')
             context.dispatch('getAdmin')
             context.commit('setNotification', {
                 title: 'Team removed'
@@ -473,13 +494,13 @@ export const actions = {
         })
     },
 
-    updatePaymentMethod(context, payload) {
-        return axios.post('/admin/subscription', payload).then(res => {
-            const customer = res.data
-            const status = get(customer, 'subscriptions.data[0].status')
-            context.commit('setSubscriptionStatus', status)
-        })
-    },
+    // updatePaymentMethod(context, payload) {
+    //     return axios.post('/admin/subscription', payload).then(res => {
+    //         const customer = res.data
+    //         const status = get(customer, 'subscriptions.data[0].status')
+    //         context.commit('setSubscriptionStatus', status)
+    //     })
+    // },
 
     updateActiveCard(context, card) {
         return axios.put(BASE_URL + '/api/card/' + card.id, card).then(res => {

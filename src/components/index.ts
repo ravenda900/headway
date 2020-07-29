@@ -34,6 +34,7 @@ export * from './admin/RemoveVideo'
 export * from './admin/StudentList'
 export * from './admin/StudentProfile'
 export * from './admin/Toast'
+export * from './admin/SubscriptionPlanList'
 
 export * from './student/Student'
 export * from './student/Quiz'

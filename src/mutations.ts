@@ -6,13 +6,14 @@ export const mutations = {
     dashboardLoading(state, loading) {
         state.dashboardLoading = loading
     },
-    setSubscriptionStatus(state, status) {
-        state.subscriptionStatus = status
-    },
+    // setSubscriptionStatus(state, status) {
+    //     state.subscriptionStatus = status
+    // },
     setAdmin(state, admin) {
         state.admin = {
             name: admin.name,
             email: admin.email,
+            stripe_cust_id: admin.stripe_cust_id
         }
         state.courses = admin.courses
         state.businesses = admin.businesses

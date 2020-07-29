@@ -3,6 +3,9 @@ import { Logger } from './logger'
 import { values } from 'lodash'
 
 export const getters = {
+    subscriptionStatus(state) {
+        return (state.subscription && state.subscription.status) || 'deleted'
+    },
     currentCard(state) {
     // console.log('currentCard getter')
         const courseId = parseInt(state.route.params.courseId)

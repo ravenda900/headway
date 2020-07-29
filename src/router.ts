@@ -60,6 +60,11 @@ export const createRoutes: () => RouteConfig[] = () => [
         component: adminComponent
     },
     {
+        path: '/subscription-plans',
+        name: 'subscriptionPlans',
+        component: adminComponent
+    },
+    {
         path: '/app',
         name: 'studentHome',
         component: studentAppComponent
@@ -97,8 +102,7 @@ export const createRoutes: () => RouteConfig[] = () => [
         path: '/reset-password',
         name: 'resetPassword',
         component: resetPassword
-    },
-
+    }
 ]
 
 export const createRouter = () => new VueRouter({ mode: 'history', routes: createRoutes() })

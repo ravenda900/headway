@@ -40,7 +40,7 @@
   &:hover {
     background: lighten($orange, 1);
   }
-  button {
+  button, a {
     display: none;
     font-size: 11px;
     color: #fff;
@@ -291,6 +291,7 @@
 
   .Admin__banner i { display: none }
   .Admin__banner button { display: block }
+  .Admin__banner a { display: block }
 
   .Admin__logout {
     transform: none;
