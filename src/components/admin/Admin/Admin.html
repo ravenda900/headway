@@ -21,10 +21,10 @@
           </router-link>
           <div class="Admin__banner">
             {{ subscription.product.name }}
-            <router-link to="/subscription-plans" class="Admin__upgrade">Upgrade now</router-link>
+            <router-link to="/subscription-plans" class="Admin__upgrade">{{ subscription.product.name === 'Complete Plan' ? 'View other plans' : 'Upgrade now' }}</router-link>
             <i class="fas fa-exclamation-square Admin__warning"></i>
           </div>
-          <div class="Admin__banner Admin__banner--angry" v-show="subscriptionStatus === 'past_due'" @click="redirectToCheckout">
+          <div class="Admin__banner Admin__banner--angry" v-show="subscriptionStatus === 'past_due'">
             Payment overdue. Pay immediately.
             <button class="Admin__upgrade">Pay now</button>
             <i class="fas fa-exclamation-square Admin__warning"></i>

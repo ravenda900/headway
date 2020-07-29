@@ -8,25 +8,17 @@ export const actions = {
     getSubscription(context) {
         return axios.get(BASE_URL + '/admin/subscription')
             .then(({ data }) => {
-                return data.subscriptions.data[0]
-            // const status = get(data, 'subscriptions.data[0].status')
-            // Possible values are trialing, active, past_due, canceled, or unpaid.
-            // const OK_STATUS = ['trialing', 'active', 'past_due']
-            // if (!includes(OK_STATUS, status)) {
-            //     console.warn('Bad stripe status', status)
-            // }
-            // if (!status) {
-            //     context.commit('setSubscriptionStatus', 'deleted')
-            // } else {
-            //     context.commit('setSubscriptionStatus', status)
-            // }
-            // context.commit('set', {
-            //     key: 'subscriptions',
-            //     value: data.subscriptions.data[0],
-            // })
 
-            // context.dispatch('getSubscriptionProduct', data.subscriptions.data[0])
+                if (data.subscriptions.data.length > 1) {
+                    for (let i = 1 ; i < data.subscriptions.data.length ; i++) {
+                        context.dispatch('cancelOtherSubscriptions', data.subscriptions.data[i].id)
+                    }
+                }
+                return data.subscriptions.data[0]
         })
+    },
+    cancelOtherSubscriptions(context, subscriptionId) {
+        return axios.delete(BASE_URL + '/admin/subscription/' + subscriptionId)
     },
     getSubscriptionProduct(context, subscription) {
         return axios.get(BASE_URL + '/admin/subscription_product/' + subscription.plan.product)
