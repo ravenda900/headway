@@ -50,6 +50,21 @@ export class SubscriptionPlanList extends Vue {
             })
     }
 
+    requestDowngradePlan(downgradePlanName) {
+        store.dispatch('sendDowngradeRequest', {
+            downgradePlanName: downgradePlanName,
+            currentPlanName: this.subscription.product.name
+        })
+            .then(({ data }) => {
+                this.$notify({
+                    group: 'admin_notifs',
+                    title: 'Downgrade plan request has been sent',
+                    text: 'The support team will contact you in 24 hours.',
+                    duration: 10000
+                })
+            })
+    }
+
     mounted() {
         store.dispatch('getSubscriptionPlans')
     }

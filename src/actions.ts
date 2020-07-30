@@ -5,6 +5,9 @@ import { get, includes } from 'lodash'
 import * as moment from 'moment'
 
 export const actions = {
+    sendDowngradeRequest(context, payload) {
+        return axios.post(BASE_URL + '/admin/subscription/downgrade', payload)
+    },
     getSubscription(context) {
         return axios.get(BASE_URL + '/admin/subscription')
             .then(({ data }) => {
@@ -74,7 +77,7 @@ export const actions = {
             })
     },
     getCheckoutSession(context, sessionId) {
-        return axios.get(BASE_URL + '/admin/checkout/session' + sessionId)
+        return axios.get(BASE_URL + '/admin/checkout/session/' + sessionId)
             .then(({ data }) => {
                 return data
             })

@@ -1,13 +1,14 @@
-<div id="dashboard" class="Admin" :class="{ 'Admin--mask': !isNotActive }" v-if="ready">
+<div id="dashboard" class="Admin" :class="{ 'Admin--mask': !isNotActive }">
   <notifications group="admin_notifs" position="bottom right" />
-  <div class="Admin__expired Wallpaper" v-if="isNotActive">
-    <div class="container text-centered">
-      <h1>Hmm&hellip; seems your account has expired</h1>
-      <p>Your account has expired and you did not enter any payment information. If you wish to continue using Grow2 you must resolve your payment.</p>
-      <p><button class="btn">Pay now</button></p>
+  <div v-if="ready">
+    <div class="Admin__expired Wallpaper" v-if="isNotActive">
+      <div class="container text-centered">
+        <h1>Hmm&hellip; seems your account has expired</h1>
+        <p>Your account has expired and you did not enter any payment information. If you wish to continue using Grow2 you must resolve your payment.</p>
+        <p><button class="btn">Pay now</button></p>
+      </div>
     </div>
-  </div>
-  <div class="Admin__content" v-else>
+    <div class="Admin__content" v-else>
       <div :class="{ 'Admin__sidebar' : true, 'Admin__sidebar--open' : this.sidebarOpen }">
         <div class="Admin__sidebar-head">
           <i class="fal fa-bars Admin__navicon" v-show="!sidebarOpen" @click="toggleSidebar"></i>
@@ -67,64 +68,65 @@
               Sign out
             </a>
           </div>
-      </div>
-    </div>
-    <div class="Admin__main">
-      <div class="Admin__toolbar">
-        <Breadcrumbs :crumbs="breadcrumbs">
-        </Breadcrumbs>
-        <button class="btn btn--text btn--icon Admin__delete" @click="removeCourse" v-show="route.name === 'course'">
-          <i class="fal fa-trash-alt"></i>
-          Delete content
-        </button>
-        <button class="btn btn--text btn--icon Admin__delete" @click="removeCard" v-show="route.name === 'card'">
-          <i class="fal fa-trash-alt"></i>
-          Delete card
-        </button>
-        <button class="btn Admin__invite" @click="inviteStudent">
-          <!-- {{inviteButtonLabel}} -->
-          Invite
-        </button>
-        <div v-show="route.name === 'businessProfile'">
-          <button class="btn btn--text btn--icon Admin__delete" @click="removeBusiness">
-            <i class="fal fa-trash-alt"></i>
-            Delete team
-          </button>
-        </div>
-        <div v-show="route.name === 'studentProfile'">
-          <button class="btn btn--text btn--icon Admin__delete" @click="removeStudent">
-            <i class="fal fa-trash-alt"></i>
-            Delete member
-          </button>
         </div>
       </div>
-      <div class="Admin__view">
-        <StudentList v-if="route.name === 'dashboard'"></StudentList>
-        <StudentProfile v-if="route.name === 'studentProfile'"></StudentProfile>
-        <BusinessProfile v-if="route.name === 'businessProfile'"></BusinessProfile>
-        <!-- The following v-if is bad. -->
-        <Course ref="course" v-if="route.name === 'course' && currentCourse" :name="currentCourse.name" :units="currentCourse.units"></Course>
-        <LearningCard v-if="route.name === 'card'"></LearningCard>
-        <SubscriptionPlanList v-if="route.name === 'subscriptionPlans'"></SubscriptionPlanList>
+      <div class="Admin__main">
+        <div class="Admin__toolbar">
+          <Breadcrumbs :crumbs="breadcrumbs">
+          </Breadcrumbs>
+          <button class="btn btn--text btn--icon Admin__delete" @click="removeCourse" v-show="route.name === 'course'">
+            <i class="fal fa-trash-alt"></i>
+            Delete content
+          </button>
+          <button class="btn btn--text btn--icon Admin__delete" @click="removeCard" v-show="route.name === 'card'">
+            <i class="fal fa-trash-alt"></i>
+            Delete card
+          </button>
+          <button class="btn Admin__invite" @click="inviteStudent">
+            <!-- {{inviteButtonLabel}} -->
+            Invite
+          </button>
+          <div v-show="route.name === 'businessProfile'">
+            <button class="btn btn--text btn--icon Admin__delete" @click="removeBusiness">
+              <i class="fal fa-trash-alt"></i>
+              Delete team
+            </button>
+          </div>
+          <div v-show="route.name === 'studentProfile'">
+            <button class="btn btn--text btn--icon Admin__delete" @click="removeStudent">
+              <i class="fal fa-trash-alt"></i>
+              Delete member
+            </button>
+          </div>
+        </div>
+        <div class="Admin__view">
+          <StudentList v-if="route.name === 'dashboard'"></StudentList>
+          <StudentProfile v-if="route.name === 'studentProfile'"></StudentProfile>
+          <BusinessProfile v-if="route.name === 'businessProfile'"></BusinessProfile>
+          <!-- The following v-if is bad. -->
+          <Course ref="course" v-if="route.name === 'course' && currentCourse" :name="currentCourse.name" :units="currentCourse.units"></Course>
+          <LearningCard v-if="route.name === 'card'"></LearningCard>
+          <SubscriptionPlanList v-if="route.name === 'subscriptionPlans'"></SubscriptionPlanList>
+        </div>
       </div>
     </div>
+    <AddBusiness v-show="modals.addBusiness" @close="toggleModal('addBusiness')"></AddBusiness>
+    <AddBusinessCourse v-show="modals.addBusinessCourse" @close="toggleModal('addBusinessCourse')"></AddBusinessCourse>
+    <AddCourse v-show="modals.addCourse" @close="toggleModal('addCourse')"></AddCourse>
+    <AddStudent v-show="modals.addStudent" @close="toggleModal('addStudent')"></AddStudent>
+    <AddStudentBusiness v-show="modals.addStudentBusiness" @close="toggleModal('addStudentBusiness')"></AddStudentBusiness>
+    <AddStudentCourse v-show="modals.addStudentCourse" @close="toggleModal('addStudentCourse')"></AddStudentCourse>
+    <AddUnit v-show="modals.addUnit" @unit-added="handleUnitAdded" @close="toggleModal('addUnit')"></AddUnit>
+    <RemoveAudio v-show="modals.removeAudio" @close="toggleModal('removeAudio')"></RemoveAudio>
+    <RemoveBusiness v-show="modals.removeBusiness" @close="toggleModal('removeBusiness')"></RemoveBusiness>
+    <RemoveBusinessCourse v-show="modals.removeBusinessCourse" @close="toggleModal('removeBusinessCourse')"></RemoveBusinessCourse>
+    <RemoveCard v-show="modals.removeCard" @close="toggleModal('removeCard')"></RemoveCard>
+    <RemoveCourse v-show="modals.removeCourse" @close="toggleModal('removeCourse')"></RemoveCourse>
+    <RemoveStudent v-show="modals.removeStudent" @close="toggleModal('removeStudent')"></RemoveStudent>
+    <RemoveStudentBusiness v-show="modals.removeStudentBusiness" @close="toggleModal('removeStudentBusiness')"></RemoveStudentBusiness>
+    <RemoveStudentCourse v-show="modals.removeStudentCourse" @close="toggleModal('removeStudentCourse')"></RemoveStudentCourse>
+    <RemoveUnit v-show="modals.removeUnit" @close="toggleModal('removeUnit')"></RemoveUnit>
+    <RemoveVideo v-show="modals.removeVideo" @close="toggleModal('removeVideo')"></RemoveVideo>
+    <Toast></Toast>
   </div>
-  <AddBusiness v-show="modals.addBusiness" @close="toggleModal('addBusiness')"></AddBusiness>
-  <AddBusinessCourse v-show="modals.addBusinessCourse" @close="toggleModal('addBusinessCourse')"></AddBusinessCourse>
-  <AddCourse v-show="modals.addCourse" @close="toggleModal('addCourse')"></AddCourse>
-  <AddStudent v-show="modals.addStudent" @close="toggleModal('addStudent')"></AddStudent>
-  <AddStudentBusiness v-show="modals.addStudentBusiness" @close="toggleModal('addStudentBusiness')"></AddStudentBusiness>
-  <AddStudentCourse v-show="modals.addStudentCourse" @close="toggleModal('addStudentCourse')"></AddStudentCourse>
-  <AddUnit v-show="modals.addUnit" @unit-added="handleUnitAdded" @close="toggleModal('addUnit')"></AddUnit>
-  <RemoveAudio v-show="modals.removeAudio" @close="toggleModal('removeAudio')"></RemoveAudio>
-  <RemoveBusiness v-show="modals.removeBusiness" @close="toggleModal('removeBusiness')"></RemoveBusiness>
-  <RemoveBusinessCourse v-show="modals.removeBusinessCourse" @close="toggleModal('removeBusinessCourse')"></RemoveBusinessCourse>
-  <RemoveCard v-show="modals.removeCard" @close="toggleModal('removeCard')"></RemoveCard>
-  <RemoveCourse v-show="modals.removeCourse" @close="toggleModal('removeCourse')"></RemoveCourse>
-  <RemoveStudent v-show="modals.removeStudent" @close="toggleModal('removeStudent')"></RemoveStudent>
-  <RemoveStudentBusiness v-show="modals.removeStudentBusiness" @close="toggleModal('removeStudentBusiness')"></RemoveStudentBusiness>
-  <RemoveStudentCourse v-show="modals.removeStudentCourse" @close="toggleModal('removeStudentCourse')"></RemoveStudentCourse>
-  <RemoveUnit v-show="modals.removeUnit" @close="toggleModal('removeUnit')"></RemoveUnit>
-  <RemoveVideo v-show="modals.removeVideo" @close="toggleModal('removeVideo')"></RemoveVideo>
-  <Toast></Toast>
 </div>

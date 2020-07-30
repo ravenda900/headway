@@ -76,8 +76,6 @@ export class Admin extends Vue {
     @State dashboardLoading
     ready = false
 
-    $checkout: any
-
     @Watch('sidebarOpen')
     watchSidebarOpen(newVal, oldVal) {
         if (newVal) {
@@ -185,20 +183,7 @@ export class Admin extends Vue {
     }
 
     mounted() {
-        const params = new URLSearchParams(window.location.search)
-        if (params.has('session_id')) {
-            store.dispatch('getCheckoutSession', params.get('session_id'))
-                .then(session => {
-                    if (!session.error) {
-                        this.$notify({
-                            group: 'admin_notifs',
-                            text: 'Payment successful',
-                            duration: 10000
-                        })
-                    }
-                })
-        }
-
+        const url = new URL(window.location.search)
         
         store.dispatch('getSubscription')
             .then(subscription => {
@@ -208,6 +193,21 @@ export class Admin extends Vue {
                     store.dispatch('getSubscriptionProduct', subscription)
                 ]).then(() => {
                     this.ready = true
+                    
+                    if (url.searchParams.has('session_id')) {
+                        store.dispatch('getCheckoutSession', url.searchParams.get('session_id'))
+                            .then(session => {
+                                if (!session.error) {
+                                    this.$notify({
+                                        group: 'admin_notifs',
+                                        text: `You are now subscribed to ${subscription.product.name}`,
+                                        duration: 10000
+                                    })
+                                    url.searchParams.delete('session_id')
+                                    window.history.pushState({}, document.title, url.href)
+                                }
+                            })
+                    }
                 })
             })
     }
