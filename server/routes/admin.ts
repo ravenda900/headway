@@ -6,6 +6,8 @@ import { Admin, Business, BusinessCourse, Card, Course, CourseStudent, Student, 
 import { getSignedUrl, createPresignedPost, s3 } from '../s3'
 import { S3_BUCKET, UPLOAD_DIRECTORY, STRIPE_SECRET } from '../constants'
 import { get } from 'lodash'
+import mailer from '../mailer'
+import mail from '../mail'
 
 import * as fs from 'fs'
 
@@ -53,8 +55,11 @@ app.get('/admin/subscription', (req, res) => {
   Admin.findByPk(adminId).then(admin => {
     if (admin.stripe_cust_id) {
       stripe.customers.retrieve(admin.stripe_cust_id, (err, customer) => {
+        if (err) {
+          Logger.error(err)
+          return
+        }
         const status = get(customer, 'subscriptions.data[0].status')
-        admin.stripe_subscription_status = status
         admin.save()
         res.send(customer)
       })
@@ -64,10 +69,108 @@ app.get('/admin/subscription', (req, res) => {
   })
 })
 
+app.get('/admin/subscription_product/:productId', (req, res) => {
+  const { productId } = req.params
+  stripe.products.retrieve(productId, (err, product) => {
+    if (err) {
+      Logger.error(err)
+      res.send(err)
+      return
+    }
+    res.send(product) 
+  })
+})
+
+app.post('/admin/checkout/session', async (req, res) => {
+  const session = await stripe.checkout.sessions.create({
+    customer: req.body.customer,
+    payment_method_types: ['card'],
+    line_items: [{
+      price: req.body.priceId,
+      quantity: 1,
+    }],
+    mode: 'subscription',
+    success_url: `${req.body.successUrl}?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: req.body.cancelUrl,
+  })
+  res.send(session)
+})
+
+app.get('/admin/checkout/session/:sessionId', (req, res) => {
+  const { sessionId } = req.params
+
+  stripe.checkout.sessions.retrieve(sessionId, (err, session) => {
+    if (err) {
+      Logger.error(err)
+      res.send(err)
+      return
+    }
+    res.send(session)
+  })
+})
+
+app.delete('/admin/subscription/:subscriptionId', (req, res) => {
+  const { subscriptionId } = req.params
+
+  stripe.subscriptions.del(subscriptionId, (err, subscription) => {
+    if (err) {
+      Logger.error(err)
+      res.send(err)
+      return
+    }
+    Logger.info(`Subscription with id ${subscription.id} has been cancelled`)
+    res.send(subscription)
+  })
+})
+
+app.get('/admin/subscription_plans', async (req, res) => {
+  const subscription_plans = []
+  for await (const product of stripe.products.list({limit: 3})) {
+    const keys = Object.keys(product.metadata)
+    const features = keys.filter(k => k !== 'price' && k !== 'price_id').map(k => {
+      return product.metadata[k]
+    })
+    product.price = product.metadata.price
+    product.price_id = product.metadata.price_id
+    product.features = features
+    delete product.metadata
+    subscription_plans.push(product)
+  }
+  res.send(subscription_plans)
+})
+
+app.post('/admin/subscription/downgrade', (req, res) => {
+  const adminId = req.user.admin.id
+  Admin.findByPk(adminId).then(admin => {
+    const mailData = {
+      current_plan: req.body.currentPlanName,
+      downgraded_plan: req.body.downgradePlanName,
+      name: admin.name,
+      email: admin.email,
+      first_name: admin.first_name,
+      last_name: admin.last_name
+    }
+    mailer.messages().send({
+      to: mail.TO,
+      from: admin.name + ' ' + admin.email,
+      subject: mail.downgrade.subject,
+      text: mail.downgrade.text(mailData),
+      html: mail.downgrade.html(mailData),
+    }, (error, body) => {
+      if (error) {
+        console.warn(error)
+      }
+      res.send({
+        title: `Your downgrade request to ${req.body.downgradePlanName} has been sent`,
+        text: 'The support team will contact you in 24 hours.'
+      })
+    })
+  })
+})
+
 app.post('/admin/subscription', (req, res) => {
   const adminId = req.user.admin.id
   const { token } = req.body
-  console.log(token)
   Admin.findByPk(adminId).then(admin => {
     if (admin.stripe_cust_id) {
       stripe.customers.retrieve(admin.stripe_cust_id, (err, customer) => {

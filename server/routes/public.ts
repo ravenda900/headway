@@ -73,7 +73,7 @@ app.post('/register', (req, res) => {
       html: mail.welcome.html(mailData),
     }, (error, body) => {
       if (error) {
-        console.warn(error)
+        console.error(error)
       }
     })
 
@@ -89,8 +89,7 @@ app.post('/register', (req, res) => {
             customer: customer.id,
             items: [{
               price: req.body.price
-            }],
-            trial_period_days: 30
+            }]
           })
 
           admin.stripe_cust_id = customer.id

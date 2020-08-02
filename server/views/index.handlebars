@@ -230,15 +230,6 @@
               <p>30 day free trial. No credit card required.</p>
             </div>
             <div class="form__group">
-              <label for="signup-plan">Plan</label>
-              <select id="signup-plan" class="input">
-                {{#each products}}
-                  <option value="{{price_id}}">{{name}}</option>
-                {{/each}}
-              </select>
-              {{!-- <input type="text" class="input" id="signup-plan" placeholder="Choose a plan above" autocomplete="off" readonly> --}}
-            </div>
-            <div class="form__group">
               <label for="signup-first">First name</label>
               <input type="text" class="input" id="signup-first" placeholder="John" autocomplete="off" required>
             </div>
@@ -365,13 +356,6 @@
 
       });
 
-      function setPlan (priceId, productName) {
-        document.getElementById('signup-price').value = priceId;
-        document.getElementById('signup-plan').value = productName;
-        location.hash = "";
-        location.hash = '#signup-section';
-      };
-
       document.getElementById("signup-form").addEventListener("submit", function(e) {
         e.preventDefault();
         const email = document.getElementById('signup-email').value;
@@ -382,7 +366,7 @@
             name: document.getElementById('signup-company').value,
             first_name: document.getElementById('signup-first').value,
             last_name: document.getElementById('signup-last').value,
-            price: document.getElementById('signup-price').value,
+            price: '{{free_plan}}',
             email: email
           },
           beforeSend: function() {

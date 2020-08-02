@@ -20,7 +20,6 @@ export class Admin extends Model<Admin> {
   @Column password: string
   @Column readonly userType: string = 'admin'
   @Column stripe_cust_id: string
-  @Column stripe_subscription_status: string
   @Column expired: boolean
 
   @HasMany(() => Business)

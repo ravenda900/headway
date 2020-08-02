@@ -183,7 +183,7 @@ export class Admin extends Vue {
     }
 
     mounted() {
-        const url = new URL(window.location.search)
+        const url = new URL(window.location.toString())
         
         store.dispatch('getSubscription')
             .then(subscription => {

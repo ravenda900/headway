@@ -66,6 +66,7 @@ app.use('/b/*', staticRoute)
 
 app.get('/', async (req, res) => {
   const subscription_plans = []
+  let free_plan = null
   for await (const product of stripe.products.list({limit: 3})) {
     const keys = Object.keys(product.metadata)
     const features = keys.filter(k => k !== 'price' && k !== 'price_id').map(k => {
@@ -75,10 +76,15 @@ app.get('/', async (req, res) => {
     product.price_id = product.metadata.price_id
     product.features = features
     delete product.metadata
+    
+    if (product.name === 'Free Plan') {
+      free_plan = product.price_id
+    }
     subscription_plans.push(product)
   }
   res.render('index', {
-    products: subscription_plans.reverse()
+    products: subscription_plans.reverse(),
+    free_plan: free_plan
   })
 })
 

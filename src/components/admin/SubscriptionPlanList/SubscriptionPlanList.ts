@@ -19,8 +19,8 @@ export class SubscriptionPlanList extends Vue {
     @State subscription
     @State admin
 
-    successUrl = `${window.location.origin}/dashboard`
-    cancelUrl = `${window.location.origin}/dashboard`
+    successUrl = `${window.location.origin}/subscription-plans`
+    cancelUrl = `${window.location.origin}/subscription-plans`
     publishableKey = STRIPE_PUBLISHABLE_KEY
     items = []
 
@@ -55,11 +55,11 @@ export class SubscriptionPlanList extends Vue {
             downgradePlanName: downgradePlanName,
             currentPlanName: this.subscription.product.name
         })
-            .then(({ data }) => {
+            .then(response => {
                 this.$notify({
                     group: 'admin_notifs',
-                    title: 'Downgrade plan request has been sent',
-                    text: 'The support team will contact you in 24 hours.',
+                    title: response.title,
+                    text: response.text,
                     duration: 10000
                 })
             })

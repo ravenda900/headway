@@ -7,6 +7,9 @@ import * as moment from 'moment'
 export const actions = {
     sendDowngradeRequest(context, payload) {
         return axios.post(BASE_URL + '/admin/subscription/downgrade', payload)
+            .then(({ data }) => {
+                return data
+            })
     },
     getSubscription(context) {
         return axios.get(BASE_URL + '/admin/subscription')

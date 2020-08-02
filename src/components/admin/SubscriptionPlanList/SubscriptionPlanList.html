@@ -25,7 +25,7 @@
             <div class="pricing-col__footer" v-if="key > subscriptionPlanIndex">
                 <button class="btn" @click.prevent="redirectToCheckout(subscription_plan.price_id)">Upgrade</button>
             </div>
-            <div class="pricing-col__footer" v-else-if="subscriptionPlanIndex < key">
+            <div class="pricing-col__footer" v-else-if="key < subscriptionPlanIndex">
                 <button class="btn btn--danger" @click.prevent="requestDowngradePlan(subscription_plan.name)">Downgrade</button>
             </div>
             </div>
