@@ -203,7 +203,7 @@ export class LearningCard extends Vue {
     }
 
     videoDropzoneOptions = {
-        url: BASE_URL + '/video-upload-success',
+        url: BASE_URL + '/admin/upload/audio',
         thumbnailWidth: 150,
         maxFiles: 1,
         maxFilesize: 512, // mb
@@ -257,7 +257,7 @@ export class LearningCard extends Vue {
     }
 
     signingUrl(f) {
-        return '/s3-policy?format=video&file=' + f.name + '&cardId=' + + this.currentCard.id
+        return BASE_URL + '/s3-policy?format=video&file=' + f.name + '&cardId=' + + this.currentCard.id
     }
 
     s3UploadError(errorMessage) {

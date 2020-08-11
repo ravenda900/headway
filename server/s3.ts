@@ -13,7 +13,6 @@ export const getSignedUrl = (filename) => {
     }
     s3.getSignedUrl('getObject', params, (err, data) => {
       if (err) {
-        console.log(err)
         return reject(err)
       } else {
         return resolve(data)
