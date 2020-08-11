@@ -1,4 +1,4 @@
-<div id="dashboard" class="Admin" :class="{ 'Admin--mask': !isNotActive }">
+<div id="dashboard" class="Admin" :class="{ 'Admin--mask': isNotActive }">
   <notifications group="admin_notifs" position="bottom right" />
   <div v-if="ready">
     <div class="Admin__expired Wallpaper" v-if="isNotActive">

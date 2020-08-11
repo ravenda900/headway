@@ -34,6 +34,7 @@ export class LearningCard extends Vue {
     @Getter currentCard
     @State route
     @State courses
+    @State admin
 
     name = ''
     ready = false
@@ -41,6 +42,7 @@ export class LearningCard extends Vue {
     evidence = ''
     quiz = []
     audioUploadPercent = 0
+    audioIsUploading = false
     videoUploadPercent = 0
     videoIsUploading = false
 
@@ -198,12 +200,14 @@ export class LearningCard extends Vue {
     audioDropzoneOptions = {
         url: BASE_URL + '/admin/upload/audio',
         thumbnailWidth: 150,
-        timeout: 99999999,
         maxFiles: 1,
+        maxFilesize: 512, // mb
+        timeout: 99999999,
+        uploadprogress: this.audioUploadProgress
     }
 
     videoDropzoneOptions = {
-        url: BASE_URL + '/admin/upload/audio',
+        url: BASE_URL + '/admin/upload/video',
         thumbnailWidth: 150,
         maxFiles: 1,
         maxFilesize: 512, // mb
@@ -211,12 +215,14 @@ export class LearningCard extends Vue {
         uploadprogress: this.videoUploadProgress
     }
 
-    awss3 = {
-        signingURL: this.signingUrl,
-        headers: {},
-        params : {},
-        sendFileToServer : false, // switching to false causes issues. try again
-        withCredentials: false
+    awss3 = (format) => {
+        return {
+            signingURL: this.signingUrl(format),
+            headers: {},
+            params : {},
+            sendFileToServer : false, // switching to false causes issues. try again
+            withCredentials: false
+        }
     }
 
     updateVideoSrc() {
@@ -256,8 +262,10 @@ export class LearningCard extends Vue {
         this.videoUploadPercent = Math.round(percent)
     }
 
-    signingUrl(f) {
-        return BASE_URL + '/s3-policy?format=video&file=' + f.name + '&cardId=' + + this.currentCard.id
+    signingUrl (format) {
+        return (f) => {
+            return BASE_URL + '/s3-policy?format=' + format + '&file=' + f.name + '&cardId=' + + this.currentCard.id + '&adminId=' + this.admin.id
+        }
     }
 
     s3UploadError(errorMessage) {
@@ -268,13 +276,15 @@ export class LearningCard extends Vue {
         console.log('s3UploadSuccess', {s3ObjectLocation})
     }
 
-    sendingEvent(file, xhr, formData) {
+    videoSendingEvent(file, xhr, formData) {
         this.videoIsUploading = true
+        // formData.append('cardId', this.currentCard.id)
     }
 
     audioSendingEvent(file, xhr, formData) {
     // console.log('audioSendingEvent')
-        formData.append('cardId', this.currentCard.id)
+        this.audioIsUploading = true
+        // formData.append('cardId', this.currentCard.id)
     }
 
     audioUploadProgress(file, percent, size) {
@@ -289,17 +299,25 @@ export class LearningCard extends Vue {
             cardId: parseInt(this.route.params.cardId),
             file: file.name
         }
+        this.audioIsUploading = false
         this.$refs.AudioDropzone.removeAllFiles(true)
+        this.currentCard.audio = file.name
+        this.updateAudioSrc()
         store.commit('setActiveCardAudio', payload)
     }
 
     videoSuccess(file) {
-        console.log('videoSuccess', file)
+        const payload = {
+            courseId: parseInt(this.route.params.courseId),
+            unitId: parseInt(this.route.params.unitId),
+            cardId: parseInt(this.route.params.cardId),
+            file: file.name
+        }
         this.videoIsUploading = false
         this.$refs.VideoDropzone.removeAllFiles(true)
         this.currentCard.video = file.name
         this.updateVideoSrc()
-    // store.commit('setActiveCardVideo', payload) // WARNING: this overwrites content edited during upload
+        store.commit('setActiveCardVideo', payload) // WARNING: this overwrites content edited during upload
     }
 
     removeAudio() {

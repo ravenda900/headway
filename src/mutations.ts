@@ -11,6 +11,7 @@ export const mutations = {
     // },
     setAdmin(state, admin) {
         state.admin = {
+            id: admin.id,
             name: admin.name,
             email: admin.email,
             stripe_cust_id: admin.stripe_cust_id

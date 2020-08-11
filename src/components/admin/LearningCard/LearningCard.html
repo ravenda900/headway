@@ -17,14 +17,17 @@
               id="AudioDropzone"
               ref="AudioDropzone"
               class="Dropzone Dropzone--audio"
+              v-show="!currentCard.audio"
               :options="audioDropzoneOptions"
               :includeStyling="false"
-              v-show="!currentCard.audio"
+              :awss3="awss3('audio')"
               @vdropzone-sending="audioSendingEvent"
               @vdropzone-success="audioSuccess"
+              @vdropzone-s3-upload-error="s3UploadError"
+              @vdropzone-s3-upload-success="s3UploadSuccess"
             >
             </vue-dropzone>
-            <div v-show="audioUploadPercent && audioUploadPercent !== 100">Uploading: {{audioUploadPercent}}%</div>
+            <ProgressBar v-show="audioIsUploading" :total="100" :completed="audioUploadPercent" />
             <div class="flex flex--aligned" v-show="currentCard.audio">
               <audio controls ref="audio" style="flex: 1"></audio>
               <i class="fal fa-trash-alt btn btn--icon LearningCard__delete-audio" @click="removeAudio"></i>
@@ -39,8 +42,8 @@
               v-show="!currentCard.video"
               :options="videoDropzoneOptions"
               :includeStyling="false"
-              :awss3="awss3"
-              @vdropzone-sending="sendingEvent"
+              :awss3="awss3('video')"
+              @vdropzone-sending="videoSendingEvent"
               @vdropzone-success="videoSuccess"
               @vdropzone-s3-upload-error="s3UploadError"
               @vdropzone-s3-upload-success="s3UploadSuccess"
