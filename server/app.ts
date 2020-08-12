@@ -18,6 +18,7 @@ const app = express()
 
 // View Engine
 const hbs = exphbs.create({})
+
 app.set('views', __dirname + '/views')
 app.set('view engine', 'handlebars')
 app.engine('handlebars', hbs.engine)

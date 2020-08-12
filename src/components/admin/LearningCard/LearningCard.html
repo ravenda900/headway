@@ -17,7 +17,7 @@
               id="AudioDropzone"
               ref="AudioDropzone"
               class="Dropzone Dropzone--audio"
-              v-show="!currentCard.audio"
+              v-if="!currentCard.audio"
               :options="audioDropzoneOptions"
               :includeStyling="false"
               :awss3="awss3('audio')"
@@ -35,22 +35,43 @@
           </div>
           <div class="form__group">
             <label class="label" for="VideoDropzone">Video</label>
-            <vue-dropzone
-              id="VideoDropzone"
-              ref="VideoDropzone"
-              class="Dropzone Dropzone--video"
-              v-show="!currentCard.video"
-              :options="videoDropzoneOptions"
-              :includeStyling="false"
-              :awss3="awss3('video')"
-              @vdropzone-sending="videoSendingEvent"
-              @vdropzone-success="videoSuccess"
-              @vdropzone-s3-upload-error="s3UploadError"
-              @vdropzone-s3-upload-success="s3UploadSuccess"
-            ></vue-dropzone>
+            <template v-if="!currentCard.video">
+              <vue-dropzone
+                id="VideoDropzone"
+                ref="VideoDropzone"
+                class="Dropzone Dropzone--video"
+                v-if="subscription.product.name === 'Free Plan'"
+                :options="videoDropzoneOptions"
+                :includeStyling="false"
+                @vdropzone-sending="youtubeVideoSendingEvent"
+                @vdropzone-success="youtubeVideoSuccess"
+              ></vue-dropzone>
+              <vue-dropzone
+                id="VideoDropzone"
+                ref="VideoDropzone"
+                class="Dropzone Dropzone--video"
+                v-else
+                :options="videoDropzoneOptions"
+                :includeStyling="false"
+                :awss3="awss3('video')"
+                @vdropzone-sending="videoSendingEvent"
+                @vdropzone-success="videoSuccess"
+                @vdropzone-s3-upload-error="s3UploadError"
+                @vdropzone-s3-upload-success="s3UploadSuccess"
+              ></vue-dropzone>
+            </template>
             <ProgressBar v-show="videoIsUploading" :total="100" :completed="videoUploadPercent" />
             <div class="LearningCard__video" v-show="currentCard.video">
-              <video controls ref="video"></video>
+              <div class="embed-container"
+                v-if="subscription.product.name === 'Free Plan'">
+                <iframe
+                  ref="youtubeVideo"
+                  frameborder="0" 
+                  allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen>
+                </iframe>
+              </div>
+              <video controls ref="video" v-else></video>
               <div class="btn btn--standard" @click="removeVideo">Remove video</div>
             </div>
           </div>
@@ -84,7 +105,16 @@
           </div>
           <div class="Mobile__hero">
             <div class="Mobile__video" v-show="currentCard.video">
-              <video controls ref="mobileVideo"></video>
+              <div class="embed-container"
+                v-if="subscription.product.name === 'Free Plan'">
+                <iframe
+                  ref="mobileYoutubeVideo"
+                  frameborder="0" 
+                  allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" 
+                  allowfullscreen>
+                </iframe>
+              </div>
+              <video controls ref="mobileVideo" v-else></video>
             </div>
           </div>
           <div class="Mobile__content">

@@ -35,6 +35,7 @@ export class LearningCard extends Vue {
     @State route
     @State courses
     @State admin
+    @State subscription
 
     name = ''
     ready = false
@@ -90,11 +91,11 @@ export class LearningCard extends Vue {
         placeholderText: 'Start writing',
         height: 400,
         events: {
-            'froalaEditor.image.beforeUpload': function(e, editor, files) {
+            'froalaEditor.image.beforeUpload': function (e, editor, files) {
                 if (files.length) {
                     // Create a File Reader.
                     const reader = new FileReader()
-      
+
                     // Set the reader to insert images when they are loaded.
                     reader.onload = function (e) {
                         const target = <any>e.target
@@ -102,13 +103,13 @@ export class LearningCard extends Vue {
                         editor.image.insert(result, null, null, editor.image.get())
                         console.log('yay')
                     }
-      
+
                     // Read image as base64.
                     reader.readAsDataURL(files[0])
                 }
-      
+
                 editor.popups.hideAll()
-      
+
                 // Stop default upload chain.
                 return false
             },
@@ -125,11 +126,11 @@ export class LearningCard extends Vue {
         placeholderText: 'Ask your users to perform a practical task related to the content in this card',
         height: 150,
         events: {
-            'froalaEditor.image.beforeUpload': function(e, editor, files) {
+            'froalaEditor.image.beforeUpload': function (e, editor, files) {
                 if (files.length) {
                     // Create a File Reader.
                     const reader = new FileReader()
-      
+
                     // Set the reader to insert images when they are loaded.
                     reader.onload = function (e) {
                         const target = <any>e.target
@@ -137,13 +138,13 @@ export class LearningCard extends Vue {
                         editor.image.insert(result, null, null, editor.image.get())
                         console.log('yay')
                     }
-      
+
                     // Read image as base64.
                     reader.readAsDataURL(files[0])
                 }
-      
+
                 editor.popups.hideAll()
-      
+
                 // Stop default upload chain.
                 return false
             },
@@ -160,7 +161,9 @@ export class LearningCard extends Vue {
         audio: HTMLAudioElement
         AudioDropzone: any
         video: HTMLVideoElement
+        youtubeVideo: HTMLIFrameElement
         mobileVideo: HTMLVideoElement
+        mobileYoutubeVideo: HTMLIFrameElement
         VideoDropzone: any
         name: HTMLInputElement
         player: AudioPlayer
@@ -192,7 +195,7 @@ export class LearningCard extends Vue {
         }
     }
 
-    @Watch('$route', { deep: true})
+    @Watch('$route', { deep: true })
     watchRoute(newVal, oldVal) {
         this.updateRoute(newVal)
     }
@@ -219,8 +222,8 @@ export class LearningCard extends Vue {
         return {
             signingURL: this.signingUrl(format),
             headers: {},
-            params : {},
-            sendFileToServer : false, // switching to false causes issues. try again
+            params: {},
+            sendFileToServer: false, // switching to false causes issues. try again
             withCredentials: false
         }
     }
@@ -230,13 +233,25 @@ export class LearningCard extends Vue {
             console.log('abort updateVideoSrc', this.currentCard.video)
             return
         }
-        Axios.get(BASE_URL + '/admin/card/' + this.currentCard.id + '/video').then(d => {
-            // console.log(d.data)
-            if (this.$refs.video) {
-                this.$refs.video.setAttribute('src', d.data)
+        Axios.get(BASE_URL + '/admin/card/' + this.currentCard.id + '/video', {
+            params: {
+                subscriptionPlan: this.subscription.product.name
             }
-            if (this.$refs.mobileVideo) {
-                this.$refs.mobileVideo.setAttribute('src', d.data)
+        }).then(d => {
+            if (this.subscription.product.name === 'Free Plan') {
+                if (this.$refs.youtubeVideo) {
+                    this.$refs.youtubeVideo.setAttribute('src', 'https://www.youtube.com/embed/' + d.data)
+                }
+                if (this.$refs.mobileYoutubeVideo) {
+                    this.$refs.mobileYoutubeVideo.setAttribute('src', 'https://www.youtube.com/embed/' + d.data)
+                }
+            } else {
+                if (this.$refs.video) {
+                    this.$refs.video.setAttribute('src', d.data)
+                }
+                if (this.$refs.mobileVideo) {
+                    this.$refs.mobileVideo.setAttribute('src', d.data)
+                }
             }
         })
     }
@@ -258,22 +273,23 @@ export class LearningCard extends Vue {
     }
 
     videoUploadProgress(file, percent, size) {
-    // console.log('percent', percent)
+        // console.log('percent', percent)
         this.videoUploadPercent = Math.round(percent)
     }
 
-    signingUrl (format) {
+    signingUrl(format) {
         return (f) => {
-            return BASE_URL + '/s3-policy?format=' + format + '&file=' + f.name + '&cardId=' + + this.currentCard.id + '&adminId=' + this.admin.id
+            return BASE_URL + '/s3-policy?format=' + format + '&file=' + f.name + '&cardId=' + + this.currentCard.id + '&adminId=' + this.admin.id +
+                '&subscriptionPlan=' + this.subscription.product.name
         }
     }
 
     s3UploadError(errorMessage) {
-        console.log('s3UploadError', {errorMessage})
+        console.log('s3UploadError', { errorMessage })
     }
 
     s3UploadSuccess(s3ObjectLocation) {
-        console.log('s3UploadSuccess', {s3ObjectLocation})
+        console.log('s3UploadSuccess', { s3ObjectLocation })
     }
 
     videoSendingEvent(file, xhr, formData) {
@@ -281,14 +297,20 @@ export class LearningCard extends Vue {
         // formData.append('cardId', this.currentCard.id)
     }
 
+    youtubeVideoSendingEvent(file, xhr, formData) {
+        this.videoIsUploading = true
+        formData.append('cardId', this.currentCard.id)
+        formData.append('subscriptionPlan', this.subscription.product.name)
+    }
+
     audioSendingEvent(file, xhr, formData) {
-    // console.log('audioSendingEvent')
+        // console.log('audioSendingEvent')
         this.audioIsUploading = true
         // formData.append('cardId', this.currentCard.id)
     }
 
     audioUploadProgress(file, percent, size) {
-    // console.log('percent', percent)
+        // console.log('percent', percent)
         this.audioUploadPercent = Math.round(percent)
     }
 
@@ -316,6 +338,21 @@ export class LearningCard extends Vue {
         this.videoIsUploading = false
         this.$refs.VideoDropzone.removeAllFiles(true)
         this.currentCard.video = file.name
+        this.updateVideoSrc()
+        store.commit('setActiveCardVideo', payload) // WARNING: this overwrites content edited during upload
+    }
+
+    youtubeVideoSuccess(file, response) {
+        console.log('response', response)
+        const payload = {
+            courseId: parseInt(this.route.params.courseId),
+            unitId: parseInt(this.route.params.unitId),
+            cardId: parseInt(this.route.params.cardId),
+            file: response.url
+        }
+        this.videoIsUploading = false
+        this.$refs.VideoDropzone.removeAllFiles(true)
+        this.currentCard.video = response.url
         this.updateVideoSrc()
         store.commit('setActiveCardVideo', payload) // WARNING: this overwrites content edited during upload
     }

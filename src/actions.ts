@@ -485,7 +485,11 @@ export const actions = {
     },
 
     removeCardVideo(context, { courseId, unitId, cardId }) {
-        return axios.delete(`${BASE_URL}/admin/card/${cardId}/video`).then(res => {
+        return axios.delete(`${BASE_URL}/admin/card/${cardId}/video`, {
+            data: {
+                subscriptionPlan: context.state.subscription.product.name
+            }
+        }).then(res => {
             context.commit('setActiveCardVideo', { courseId, unitId, cardId, file: null })
         })
     },

@@ -8,8 +8,10 @@ import { S3_BUCKET, UPLOAD_DIRECTORY, STRIPE_SECRET } from '../constants'
 import { get } from 'lodash'
 import mailer from '../mailer'
 import mail from '../mail'
+import { google } from 'googleapis'
+import { authorize, uploadVideo, removeVideo } from '../youtube'
 
-import * as fs from 'fs'
+const fs = require('fs')
 
 const stripe = require('stripe')(STRIPE_SECRET)
 
@@ -267,12 +269,10 @@ app.post('/admin/unit/:unitId/card', (req, res) => {
 })
 
 app.post('/s3-policy', (req, res) => {
-  const {cardId, file, format} = req.query
+  const {cardId, file, format, adminId} = req.query
   const Key = `${cardId}/${file}`
-  // console.log(req.query)
-  // console.log('----')
   Card.findByPk(cardId, { include: [{ model: Unit, include: [Course] }] }).then(card => {
-    if (card && card.unit.course.adminId === req.user.admin.id) {
+    if (card && card.unit.course.adminId === parseInt(adminId)) {
       createPresignedPost(Key).then(d => {
         // console.log(d)
         if (format === 'video') {
@@ -299,34 +299,50 @@ app.post('/s3-policy', (req, res) => {
 
 app.post('/admin/upload/:format', (req, res) => {
   const { format } = req.params
-  const { cardId } = req.body
+  const { cardId, subscriptionPlan } = req.body
   const { file } = req.files
+
   Card.findByPk(cardId, { include: [{ model: Unit, include: [Course] }] }).then(card => {
     if (card && card.unit.course.adminId === req.user.admin.id) {
-      const Key = card.id + '/' + file.name
-      const params = {
-        Bucket: S3_BUCKET,
-        Key,
-        Body: file.data
-      }
-      s3.putObject(params, (err) => {
-        if (err) {
-          Logger.error(`Failed to upload file to ${S3_BUCKET}/${Key}`)
-        } else {
-          if (format === 'video') {
-            card.video = file.name
-          } else if (format === 'audio') {
-            card.audio = file.name
-          } else {
-            card.media = file.name
+      if (subscriptionPlan === 'Free Plan' && format === 'video') {
+        fs.readFile('client_secret.json', (error, content) => {
+          if (error) {
+              console.log('Error loading client secret file: ' + error);
+              return
           }
-          card.save()
-          Logger.debug(`Successfully uploaded file to ${S3_BUCKET}/${Key}`)
-          res.send('Uploaded')
+          // Authorize a client with the loaded credentials
+          authorize(JSON.parse(content), uploadVideo, {
+            name: card.name,
+            file,
+            res,
+            card
+          })
+        })
+      } else {
+        const Key = card.id + '/' + file.name
+        const params = {
+          Bucket: S3_BUCKET,
+          Key,
+          Body: file.data
         }
-      })
-    }
-    else {
+        s3.putObject(params, (err) => {
+          if (err) {
+            Logger.error(`Failed to upload file to ${S3_BUCKET}/${Key}`)
+          } else {
+            if (format === 'video') {
+              card.video = file.name
+            } else if (format === 'audio') {
+              card.audio = file.name
+            } else {
+              card.media = file.name
+            }
+            card.save()
+            Logger.debug(`Successfully uploaded file to ${S3_BUCKET}/${Key}`)
+            res.send('Uploaded')
+          }
+        }) 
+      }
+    } else {
       res.status(401).send({ message: 'Unauthorized: Admin does not own Card #' + cardId })
     }
   })
@@ -637,46 +653,64 @@ app.get('/admin/business/:businessId', checkAdminPermission, (req, res) => {
 
 app.get('/admin/card/:cardId/:format', checkAdminPermission, (req, res) => {
   const { cardId, format } = req.params
+  const { subscriptionPlan } = req.query
   Card.scope('includeCourse').findByPk(cardId).then(card => {
-    let filename = card.media // default
-    if (format === 'video') {
-      filename = card.video
-    } else if (format === 'audio') {
-      filename = card.audio
+    if (subscriptionPlan === 'Free Plan' && format === 'video') {
+      res.send(card.video)
+    } else {
+      let filename = card.media // default
+      if (format === 'video') {
+        filename = card.video
+      } else if (format === 'audio') {
+        filename = card.audio
+      }
+      const Key = `${cardId}/${filename}`
+      getSignedUrl(Key).then(url => {
+        res.send(url)
+      })
     }
-    const Key = `${cardId}/${filename}`
-    getSignedUrl(Key).then(url => {
-      res.send(url)
-    })
   })
 })
 
 app.delete('/admin/card/:cardId/:format', checkAdminPermission, (req, res) => {
   const { cardId, format } = req.params
+  const { subscriptionPlan } = req.body
 
   Card.scope('includeCourse').findByPk(cardId).then(card => {
-    let filename
-    if (format === 'video') {
-      filename = card.video
-    } else if (format === 'audio') {
-      filename = card.audio
-    }
-    const Key = `${cardId}/${filename}`
-    // Logger.debug(`S3 deleteObject ${Key} request`)
-    const params = {
-      Bucket: S3_BUCKET,
-      Key,
-    }
-    s3.deleteObject(params, (err, data) => {
-      if (err) {
-        console.warn(err)
-      }
-      // Logger.debug(`S3 deleteObject ${Key} success`)
-    })
-    if (format === 'video') {
+    if (subscriptionPlan === 'Free Plan') {
+      fs.readFile('client_secret.json', (error, content) => {
+        if (error) {
+            console.log('Error loading client secret file: ' + error);
+            return
+        }
+        // Authorize a client with the loaded credentials
+        authorize(JSON.parse(content), removeVideo, card.video)
+      })
       card.video = null
-    } else if (format === 'audio') {
-      card.audio = null
+    } else {
+      let filename
+      if (format === 'video') {
+        filename = card.video
+      } else if (format === 'audio') {
+        filename = card.audio
+      }
+      const Key = `${cardId}/${filename}`
+      Logger.debug(`S3 deleteObject ${Key} request`)
+      const params = {
+        Bucket: S3_BUCKET,
+        Key,
+      }
+      s3.deleteObject(params, (err, data) => {
+        if (err) {
+          console.warn(err)
+        }
+        Logger.debug(`S3 deleteObject ${Key} success`)
+      })
+      if (format === 'video') {
+        card.video = null
+      } else if (format === 'audio') {
+        card.audio = null
+      }
     }
     card.save()
     res.send('OK')
