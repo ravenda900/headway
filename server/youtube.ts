@@ -74,40 +74,62 @@ const storeToken = token => {
 }
 
 export const uploadVideo = (auth, { name, file, res, card }) => {
-    service.videos.insert(
-        {
-            auth: auth,
-            part: 'snippet,contentDetails,status',
-            resource: {
-                // Video title and description
-                snippet: {
-                    title: name,
-                    description: name
-                },
-                // I set to private for tests
-                status: {
-                    privacyStatus: 'unlisted'
-                }
+    service.videos.insert({
+        auth: auth,
+        part: 'snippet,contentDetails,status',
+        resource: {
+            // Video title and description
+            snippet: {
+                title: name,
+                description: name
             },
-
-            // Create the readable stream to upload the video
-            media: {                
-                body: s.createReadStream(file.data) // Change here to your real video
+            // I set to private for tests
+            status: {
+                privacyStatus: 'unlisted'
             }
-        }, (error, response) => {
-            if (error) {
-                console.log('The API returned an error: ' + error)
-                return
-            }
-
-            card.video = response.data.id
-            card.save()
-            Logger.debug('Successfully uploaded video to Youtube with embed url https://www.youtube.com/embed/' + response.data.id)
-            res.send({
-                url: 'https://www.youtube.com/embed/' + response.data.id
-            })
+        },
+        // Create the readable stream to upload the video
+        media: {                
+            body: s.createReadStream(file.data) // Change here to your real video
         }
-    )
+    }, (error, response) => {
+        if (error) {
+            console.log('The API returned an error: ' + error)
+            return
+        }
+
+        card.video = response.data.id
+        card.save()
+        Logger.debug('Successfully uploaded video to Youtube with embed url https://www.youtube.com/embed/' + response.data.id)
+        res.send({
+            url: 'https://www.youtube.com/embed/' + response.data.id
+        })
+    })
+}
+
+export const updateVideo = (auth, { id, name, res }) => {
+    service.videos.update({
+        auth: auth,
+        id: id,
+        part: 'snippet,contentDetails,status',
+        resource: {
+            // Video title and description
+            snippet: {
+                title: name,
+                description: name
+            },
+            // I set to private for tests
+            status: {
+                privacyStatus: 'private'
+            }
+        }
+    }, (error, response) => {
+        if (error) {
+            console.log('The API returned an error: ' + error)
+            return
+        }
+        res.send('Updated')
+    })
 }
 
 export const removeVideo = (auth, id) => {
