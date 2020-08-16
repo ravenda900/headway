@@ -61,6 +61,7 @@
               ></vue-dropzone>
             </template>
             <ProgressBar v-show="videoIsUploading" :total="100" :completed="videoUploadPercent" />
+            <span v-show="videoIsUploading">Please wait. Your video is still processing. It will take some time.</span>
             <div class="LearningCard__video" v-show="currentCard.video">
               <div class="embed-container"
                 v-if="subscription.product.name === 'Free Plan'">
