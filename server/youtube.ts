@@ -132,15 +132,17 @@ export const updateVideo = (auth, { id, name, res }) => {
     })
 }
 
-export const removeVideo = (auth, id) => {
+export const removeVideo = (auth, card) => {
     service.videos.delete({
         auth: auth,
-        id: id
+        id: card.video
     }, (error, response) => {
         if (error) {
             console.log('The API returned an error: ' + error)
             return
         }
+        card.video = null
+        card.save()
 
         Logger.debug('Successfully deleted video from Youtube with embed url https://www.youtube.com/embed/' + id)
     })

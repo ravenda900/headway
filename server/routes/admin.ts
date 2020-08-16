@@ -684,9 +684,8 @@ app.delete('/admin/card/:cardId/:format', checkAdminPermission, (req, res) => {
             return
         }
         // Authorize a client with the loaded credentials
-        authorize(JSON.parse(content), removeVideo, card.video)
+        authorize(JSON.parse(content), removeVideo, card)
       })
-      card.video = null
     } else {
       let filename
       if (format === 'video') {
@@ -711,8 +710,8 @@ app.delete('/admin/card/:cardId/:format', checkAdminPermission, (req, res) => {
       } else if (format === 'audio') {
         card.audio = null
       }
+      card.save()
     }
-    card.save()
     res.send('OK')
   })
 })
