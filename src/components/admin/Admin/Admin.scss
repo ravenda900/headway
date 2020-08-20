@@ -80,6 +80,27 @@
   color: $blue;
 }
 
+.Admin__storage {
+  position: absolute;
+  bottom: 70px;
+  left: 0;
+  right: 0;
+  padding: 1rem;
+  opacity: 0;
+  z-index: 50;
+  transform: translateX(-60px); // is this the sidebar tab in px?
+  background: #403d6a;
+  box-shadow: 0 -2px 5px rgba(0,0,0,0.25);
+  &-label {
+    font-size: 0.85rem;
+    margin-bottom: 0;
+    font-weight: normal;
+  }
+  .ProgressBar {
+    margin-bottom: 0;
+  }
+}
+
 .Admin__logout {
   position: absolute;
   bottom: 0;
@@ -149,6 +170,7 @@
 .Admin__sidebar--open {
   transform: translateX(0);
   .Admin__logout,
+  .Admin__storage,
   .Logo,
   .Browse {
     transform: translateX(0);
@@ -293,7 +315,8 @@
   .Admin__banner button { display: block }
   .Admin__banner a { display: block }
 
-  .Admin__logout {
+  .Admin__logout, 
+  .Admin__storage {
     transform: none;
     opacity: 1;
   }
@@ -353,8 +376,7 @@
 }
 
 .Admin__sidebar-body {
-  height: calc(100% - 97px);
+  height: calc(100% - 253px);
   overflow-y: auto;
   padding: 1rem;
-  padding-bottom: 82px;
 }

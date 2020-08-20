@@ -52,5 +52,6 @@ export const state = {
     removeCardId: null,
     addCardUnitId: null,
     subscription: null,
-    subscription_plans: []
+    subscription_plans: [],
+    storageUsage: null
 }

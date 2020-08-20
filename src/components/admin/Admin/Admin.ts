@@ -8,6 +8,7 @@ import { CourseService, BusinessService, StudentService, UnitService } from '../
 import { AddStudent, AddStudentBusiness, AddStudentCourse, AddUnit, AddCard, AddBusiness, Breadcrumbs, StudentList, StudentProfile, Toast, BusinessProfile, LearningCard, Course, Businesses, CourseMenu, RemoveStudentCourse, RemoveStudentBusiness, AddCourse, RemoveCard, RemoveVideo, RemoveAudio, RemoveBusiness, RemoveStudent, RemoveCourse, RemoveUnit, RemoveBusinessCourse, AddBusinessCourse, SubscriptionPlanList } from '../../'
 
 import { Login } from '../../shared/Login'
+import { ProgressBar } from '../../shared/ProgressBar'
 
 import './Admin.scss'
 import store from '../../../store'
@@ -47,7 +48,8 @@ const toggleModal = k => store.commit('toggleModal', k)
         StudentList,
         StudentProfile,
         Toast,
-        SubscriptionPlanList
+        SubscriptionPlanList,
+        ProgressBar
     }
 })
 
@@ -74,6 +76,7 @@ export class Admin extends Vue {
     @State sidebarOpen
     @State subscription
     @State dashboardLoading
+    @State storageUsage
     ready = false
 
     @Watch('sidebarOpen')
@@ -137,6 +140,10 @@ export class Admin extends Vue {
         }]
     }
 
+    get storageUsagePercentage() {
+        return (this.storageUsage.sizeInBytes / this.subscription.product.metadata.storageInBytes) * 100
+    }
+
     handleUnitAdded() {
         this.$refs.course.sortUnits()
     }
@@ -182,33 +189,27 @@ export class Admin extends Vue {
         store.commit('toggleSidebar')
     }
 
-    mounted() {
+    async mounted() {
         const url = new URL(window.location.toString())
         
-        store.dispatch('getSubscription')
-            .then(subscription => {
-                store.dispatch('getSubscriptionProduct', subscription)
-                Promise.all([
-                    store.dispatch('getAdmin'),
-                    store.dispatch('getSubscriptionProduct', subscription)
-                ]).then(() => {
-                    this.ready = true
+        const subscription = await store.dispatch('getSubscription')
+        await store.dispatch('getAdmin')
+        await store.dispatch('getSubscriptionProduct', subscription)
+        await store.dispatch('getStorageUsage', subscription)
+
+        this.ready = true
                     
-                    if (url.searchParams.has('session_id')) {
-                        store.dispatch('getCheckoutSession', url.searchParams.get('session_id'))
-                            .then(session => {
-                                if (!session.error) {
-                                    this.$notify({
-                                        group: 'admin_notifs',
-                                        text: `You are now subscribed to ${subscription.product.name}`,
-                                        duration: 10000
-                                    })
-                                    url.searchParams.delete('session_id')
-                                    window.history.pushState({}, document.title, url.href)
-                                }
-                            })
-                    }
+        if (url.searchParams.has('session_id')) {
+            const session = await store.dispatch('getCheckoutSession', url.searchParams.get('session_id'))
+            if (!session.error) {
+                this.$notify({
+                    group: 'admin_notifs',
+                    text: `You are now subscribed to ${subscription.product.name}`,
+                    duration: 10000
                 })
-            })
+                url.searchParams.delete('session_id')
+                window.history.pushState({}, document.title, url.href)
+            }
+        }
     }
 }

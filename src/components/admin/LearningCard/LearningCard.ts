@@ -36,6 +36,7 @@ export class LearningCard extends Vue {
     @State courses
     @State admin
     @State subscription
+    @State storageUsage
 
     name = ''
     ready = false
@@ -200,11 +201,18 @@ export class LearningCard extends Vue {
         this.updateRoute(newVal)
     }
 
+    get maxFileSize () {
+        if (this.subscription && this.subscription.product && this.storageUsage) {
+            return (this.subscription.product.metadata.storageInBytes - this.storageUsage.sizeInBytes) / 1048576
+        }
+        return 0
+    }
+
     audioDropzoneOptions = {
         url: BASE_URL + '/admin/upload/audio',
         thumbnailWidth: 150,
         maxFiles: 1,
-        maxFilesize: 512, // mb
+        maxFilesize: this.maxFileSize, // mb
         timeout: 99999999,
         uploadprogress: this.audioUploadProgress
     }
@@ -213,7 +221,7 @@ export class LearningCard extends Vue {
         url: BASE_URL + '/admin/upload/video',
         thumbnailWidth: 150,
         maxFiles: 1,
-        maxFilesize: 512, // mb
+        maxFilesize: this.maxFileSize, // mb
         timeout: 99999999,
         uploadprogress: this.videoUploadProgress
     }
@@ -290,6 +298,7 @@ export class LearningCard extends Vue {
 
     s3UploadSuccess(s3ObjectLocation) {
         console.log('s3UploadSuccess', { s3ObjectLocation })
+        store.dispatch('getStorageUsage', this.subscription)
     }
 
     videoSendingEvent(file, xhr, formData) {
@@ -325,6 +334,7 @@ export class LearningCard extends Vue {
         this.$refs.AudioDropzone.removeAllFiles(true)
         this.currentCard.audio = file.name
         this.updateAudioSrc()
+        store.dispatch('getStorageUsage', this.subscription)
         store.commit('setActiveCardAudio', payload)
     }
 
@@ -335,10 +345,12 @@ export class LearningCard extends Vue {
             cardId: parseInt(this.route.params.cardId),
             file: file.name
         }
+        store.dispatch('getStorageUsage', this.subscription)
         this.videoIsUploading = false
         this.$refs.VideoDropzone.removeAllFiles(true)
         this.currentCard.video = file.name
         this.updateVideoSrc()
+        store.dispatch('getStorageUsage', this.subscription)
         store.commit('setActiveCardVideo', payload) // WARNING: this overwrites content edited during upload
     }
 
@@ -354,6 +366,7 @@ export class LearningCard extends Vue {
         this.$refs.VideoDropzone.removeAllFiles(true)
         this.currentCard.video = response.url
         this.updateVideoSrc()
+        store.dispatch('getStorageUsage', this.subscription)
         store.commit('setActiveCardVideo', payload) // WARNING: this overwrites content edited during upload
     }
 
@@ -366,6 +379,21 @@ export class LearningCard extends Vue {
     }
 
     removeVideo() {
+        // if (this.subscription.product.name === 'Free Plan') {
+        //     if (this.$refs.youtubeVideo) {
+        //         this.$refs.youtubeVideo.stop()
+        //     }
+        //     if (this.$refs.mobileYoutubeVideo) {
+        //         this.$refs.mobileYoutubeVideo.setAttribute('src', 'https://www.youtube.com/embed/' + d.data)
+        //     }
+        // } else {
+        //     if (this.$refs.video) {
+        //         this.$refs.video.setAttribute('src', d.data)
+        //     }
+        //     if (this.$refs.mobileVideo) {
+        //         this.$refs.mobileVideo.setAttribute('src', d.data)
+        //     }
+        // }
         store.commit('set', {
             key: 'removeVideoCardId',
             value: this.$route.params.cardId,

@@ -32,7 +32,7 @@
           </div>
         </div>
         <div class="Admin__sidebar-body">
-          <div v-show="dashboardLoading" class="Loading">
+          <div v-if="dashboardLoading" class="Loading">
             <div class="Loading__title"></div>
             <div class="Loading__group">
               <div class="Loading__item"></div>
@@ -61,6 +61,10 @@
             </h4>
             <div v-show="businesses.length === 1"><p class="ghosted">You have no teams</p></div>
             <CourseMenu icon="business" v-show="businesses.length > 1" @createCourse="showBusinessModal = true" :items="businessMenu" collection="Members"></CourseMenu>
+          </div>
+          <div class="Admin__storage">
+            <p class="Admin__storage-label">{{ storageUsage.size }} of {{ subscription.product.metadata.storageLimit }} used</p>
+            <ProgressBar :total="100" :completed="storageUsagePercentage" :show-label="false" :height="0.2" />
           </div>
           <div class="Admin__logout">
             <a href="/logout" class="btn btn--text">
