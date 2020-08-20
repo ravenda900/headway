@@ -140,10 +140,6 @@ export class Admin extends Vue {
         }]
     }
 
-    get storageUsagePercentage() {
-        return (this.storageUsage.sizeInBytes / this.subscription.product.metadata.storageInBytes) * 100
-    }
-
     handleUnitAdded() {
         this.$refs.course.sortUnits()
     }

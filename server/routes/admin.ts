@@ -129,7 +129,8 @@ app.get('/admin/subscription_plans', async (req, res) => {
   const subscription_plans = []
   for await (const product of stripe.products.list({limit: 3})) {
     const keys = Object.keys(product.metadata)
-    const features = keys.filter(k => k !== 'price' && k !== 'price_id').map(k => {
+    const notFeatureKeys = ['price', 'price_id', 'storageLimit', 'storageInBytes']
+    const features = keys.filter(k => !notFeatureKeys.includes(k)).map(k => {
       return product.metadata[k]
     })
     product.price = product.metadata.price
@@ -270,7 +271,7 @@ app.post('/admin/unit/:unitId/card', (req, res) => {
 
 app.post('/s3-policy', (req, res) => {
   const {cardId, file, format, adminId} = req.query
-  const Key = `${cardId}/${file}`
+  const Key = `${adminId}/${cardId}/${file}`
   Card.findByPk(cardId, { include: [{ model: Unit, include: [Course] }] }).then(card => {
     if (card && card.unit.course.adminId === parseInt(adminId)) {
       createPresignedPost(Key).then(d => {
@@ -297,6 +298,41 @@ app.post('/s3-policy', (req, res) => {
   })
 })
 
+app.get('/admin/storage/size', (req, res) => {
+  const { subscriptionPlan } = req.query
+
+  if (subscriptionPlan === 'Free Plan') {
+    res.send({ size: '0 bytes' })
+  } else {
+    const params = {
+      Bucket: S3_BUCKET,
+      Prefix: `${req.user.admin.id}/`
+    }
+    s3.listObjects(params, (err, data) => {
+      const bytes = data.Contents.reduce((totalBytes, content) => {
+        totalBytes += content.Size
+        return totalBytes
+      }, 0)
+        
+      let storageUsageSize = ''
+      if (bytes >= 1073741824) {
+        storageUsageSize = `${(bytes / 1073741824).toFixed(2)} GB`
+      } else if (bytes >= 1048576) {
+        storageUsageSize = `${(bytes / 1048576).toFixed(2)} MB`
+      } else if (bytes >= 1024) {
+        storageUsageSize = `${(bytes / 1024).toFixed(2)} KB`
+      } else if (bytes > 1) {
+        storageUsageSize = `${bytes} bytes`
+      } else if (bytes == 1) {
+        storageUsageSize = `${bytes} byte`
+      } else {
+        storageUsageSize = '0 bytes'
+      }
+      res.send({ size: storageUsageSize, sizeInBytes: bytes })
+    })
+  }
+})
+
 app.post('/admin/upload/:format', (req, res) => {
   const { format } = req.params
   const { cardId, subscriptionPlan } = req.body
@@ -319,7 +355,8 @@ app.post('/admin/upload/:format', (req, res) => {
           })
         })
       } else {
-        const Key = card.id + '/' + file.name
+        const Key = `${req.user.admin.id}/${card.id}/${file.name}`
+        console.log('key', Key)
         const params = {
           Bucket: S3_BUCKET,
           Key,
@@ -664,7 +701,7 @@ app.get('/admin/card/:cardId/:format', checkAdminPermission, (req, res) => {
       } else if (format === 'audio') {
         filename = card.audio
       }
-      const Key = `${cardId}/${filename}`
+      const Key = `${req.user.admin.id}/${cardId}/${filename}`
       getSignedUrl(Key).then(url => {
         res.send(url)
       })
@@ -693,7 +730,7 @@ app.delete('/admin/card/:cardId/:format', checkAdminPermission, (req, res) => {
       } else if (format === 'audio') {
         filename = card.audio
       }
-      const Key = `${cardId}/${filename}`
+      const Key = `${req.user.admin.id}/${cardId}/${filename}`
       Logger.debug(`S3 deleteObject ${Key} request`)
       const params = {
         Bucket: S3_BUCKET,

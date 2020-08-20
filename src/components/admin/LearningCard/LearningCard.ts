@@ -371,6 +371,9 @@ export class LearningCard extends Vue {
     }
 
     removeAudio() {
+        if (this.$refs.audio) {
+            this.$refs.audio.pause()
+        }
         store.commit('set', {
             key: 'removeAudioCardId',
             value: this.$route.params.cardId,
@@ -379,21 +382,23 @@ export class LearningCard extends Vue {
     }
 
     removeVideo() {
-        // if (this.subscription.product.name === 'Free Plan') {
-        //     if (this.$refs.youtubeVideo) {
-        //         this.$refs.youtubeVideo.stop()
-        //     }
-        //     if (this.$refs.mobileYoutubeVideo) {
-        //         this.$refs.mobileYoutubeVideo.setAttribute('src', 'https://www.youtube.com/embed/' + d.data)
-        //     }
-        // } else {
-        //     if (this.$refs.video) {
-        //         this.$refs.video.setAttribute('src', d.data)
-        //     }
-        //     if (this.$refs.mobileVideo) {
-        //         this.$refs.mobileVideo.setAttribute('src', d.data)
-        //     }
-        // }
+        if (this.subscription.product.name === 'Free Plan') {
+            if (this.$refs.youtubeVideo) {
+                const youtubeVideoSrc = this.$refs.youtubeVideo.src
+                this.$refs.youtubeVideo.src = youtubeVideoSrc
+            }
+            if (this.$refs.mobileYoutubeVideo) {
+                const mobileYoutubeVideoSrc = this.$refs.youtubeVideo.src
+                this.$refs.youtubeVideo.src = mobileYoutubeVideoSrc
+            }
+        } else {
+            if (this.$refs.video) {
+                this.$refs.video.pause()
+            }
+            if (this.$refs.mobileVideo) {
+                this.$refs.video.pause()
+            }
+        }
         store.commit('set', {
             key: 'removeVideoCardId',
             value: this.$route.params.cardId,

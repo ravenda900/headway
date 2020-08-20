@@ -64,7 +64,7 @@
           </div>
           <div class="Admin__storage">
             <p class="Admin__storage-label">{{ storageUsage.size }} of {{ subscription.product.metadata.storageLimit }} used</p>
-            <ProgressBar :total="100" :completed="storageUsagePercentage" :show-label="false" :height="0.2" />
+            <ProgressBar :total="parseInt(subscription.product.metadata.storageInBytes)" :completed="storageUsage.sizeInBytes" :show-label="false" :height="0.2" />
           </div>
           <div class="Admin__logout">
             <a href="/logout" class="btn btn--text">
