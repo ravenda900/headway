@@ -29,7 +29,7 @@
     "autoprefixer": "~7.2.5",
     "awesome-typescript-loader": "~3.4.1",
     "aws-sdk": "^2.243.1",
-    "axios": "~0.17.1",
+    "axios": "~0.18.1",
     "bcrypt": "^3.0.6",
     "compression-webpack-plugin": "~1.1.6",
     "connect-session-sequelize": "^6.0.0",
