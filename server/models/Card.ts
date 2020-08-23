@@ -1,9 +1,10 @@
 import * as slug from 'slug'
-import { Table, Column, Model, HasMany, ForeignKey, BelongsTo, BelongsToMany, BeforeUpdate, BeforeCreate, DataType, Scopes } from 'sequelize-typescript'
+import { Table, Column, Model, HasMany, ForeignKey, HasOne, BelongsTo, BelongsToMany, BeforeUpdate, BeforeCreate, DataType, Scopes, DefaultScope } from 'sequelize-typescript'
 import Unit from './Unit'
 import Activity from './Activity'
 import Student from './Student'
 import { Course } from './Course'
+import File from './File'
 
 @Scopes({
   includeCourse: {
@@ -17,6 +18,18 @@ import { Course } from './Course'
     }]
   }
 })
+@DefaultScope({
+  include: [{
+    model: () => File,
+    as: 'Audio',
+    where: { type: 'audio' }
+  }, {
+    model: () => File,
+    as: 'Video',
+    where: { type: 'video' }
+  }]
+})
+
 @Table({ timestamps: true })
 export class Card extends Model<Card> {
   @Column name: string
@@ -24,8 +37,6 @@ export class Card extends Model<Card> {
   @Column(DataType.TEXT({ length: 'long' })) content: string
   @Column evidence_task: string
   @Column media: string
-  @Column video: string
-  @Column audio: string
   @Column(DataType.TEXT) quiz: string
 
   @BeforeUpdate
@@ -40,6 +51,19 @@ export class Card extends Model<Card> {
 
   @BelongsTo(() => Unit)
   unit: Unit
+
+  @ForeignKey(() => File)
+  @Column
+  audioId: number
+  @HasOne(() => File)
+  audio: File
+
+  @ForeignKey(() => File)
+  @Column
+  videoId: number
+  @HasOne(() => File)
+  video: File
+
 }
 
 export default Card

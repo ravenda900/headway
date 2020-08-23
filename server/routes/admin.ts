@@ -2,7 +2,7 @@ import { createCourse, inviteStudent } from '../actions'
 import app from '../app'
 import { checkAdminLogin, checkAdminPermission, mockAdminLogin } from '../authentication'
 import { Logger } from '../logger'
-import { Admin, Business, BusinessCourse, Card, Course, CourseStudent, Student, Unit, BusinessStudent, Activity, Notification } from '../models'
+import { Admin, Business, BusinessCourse, Card, Course, CourseStudent, Student, Unit, BusinessStudent, Activity, Notification, File } from '../models'
 import { getSignedUrl, createPresignedPost, s3 } from '../s3'
 import { S3_BUCKET, UPLOAD_DIRECTORY, STRIPE_SECRET } from '../constants'
 import { get } from 'lodash'
@@ -338,51 +338,51 @@ app.post('/admin/upload/:format', (req, res) => {
   const { cardId, subscriptionPlan } = req.body
   const { file } = req.files
 
-  Card.findByPk(cardId, { include: [{ model: Unit, include: [Course] }] }).then(card => {
-    if (card && card.unit.course.adminId === req.user.admin.id) {
-      if (subscriptionPlan === 'Free Plan' && format === 'video') {
-        fs.readFile('client_secret.json', (error, content) => {
-          if (error) {
-              console.log('Error loading client secret file: ' + error);
-              return
-          }
-          // Authorize a client with the loaded credentials
-          authorize(JSON.parse(content), uploadVideo, {
-            name: card.name,
-            file,
-            res,
-            card
-          })
-        })
-      } else {
-        const Key = `${req.user.admin.id}/${card.id}/${file.name}`
-        console.log('key', Key)
-        const params = {
-          Bucket: S3_BUCKET,
-          Key,
-          Body: file.data
-        }
-        s3.putObject(params, (err) => {
-          if (err) {
-            Logger.error(`Failed to upload file to ${S3_BUCKET}/${Key}`)
-          } else {
-            if (format === 'video') {
-              card.video = file.name
-            } else if (format === 'audio') {
-              card.audio = file.name
-            } else {
-              card.media = file.name
-            }
-            card.save()
-            Logger.debug(`Successfully uploaded file to ${S3_BUCKET}/${Key}`)
-            res.send('Uploaded')
-          }
-        }) 
-      }
-    } else {
-      res.status(401).send({ message: 'Unauthorized: Admin does not own Card #' + cardId })
-    }
-  })
+  // Card.findByPk(cardId, { include: [{ model: Unit, include: [Course] }] }).then(card => {
+  //   if (card && card.unit.course.adminId === req.user.admin.id) {
+  //     if (subscriptionPlan === 'Free Plan' && format === 'video') {
+  //       fs.readFile('client_secret.json', (error, content) => {
+  //         if (error) {
+  //             console.log('Error loading client secret file: ' + error);
+  //             return
+  //         }
+  //         // Authorize a client with the loaded credentials
+  //         authorize(JSON.parse(content), uploadVideo, {
+  //           name: card.name,
+  //           file,
+  //           res,
+  //           card
+  //         })
+  //       })
+  //     } else {
+  //       const Key = `${req.user.admin.id}/${card.id}/${file.name}`
+  //       console.log('key', Key)
+  //       const params = {
+  //         Bucket: S3_BUCKET,
+  //         Key,
+  //         Body: file.data
+  //       }
+  //       s3.putObject(params, (err) => {
+  //         if (err) {
+  //           Logger.error(`Failed to upload file to ${S3_BUCKET}/${Key}`)
+  //         } else {
+  //           if (format === 'video') {
+  //             card.video = file.name
+  //           } else if (format === 'audio') {
+  //             card.audio = file.name
+  //           } else {
+  //             card.media = file.name
+  //           }
+  //           card.save()
+  //           Logger.debug(`Successfully uploaded file to ${S3_BUCKET}/${Key}`)
+  //           res.send('Uploaded')
+  //         }
+  //       }) 
+  //     }
+  //   } else {
+  //     res.status(401).send({ message: 'Unauthorized: Admin does not own Card #' + cardId })
+  //   }
+  // })
 })
 
 
@@ -697,9 +697,9 @@ app.get('/admin/card/:cardId/:format', checkAdminPermission, (req, res) => {
     } else {
       let filename = card.media // default
       if (format === 'video') {
-        filename = card.video
+        filename = card.video.name
       } else if (format === 'audio') {
-        filename = card.audio
+        filename = card.audio.name
       }
       const Key = `${req.user.admin.id}/${cardId}/${filename}`
       getSignedUrl(Key).then(url => {
