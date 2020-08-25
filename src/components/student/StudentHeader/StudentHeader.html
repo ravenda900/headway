@@ -35,10 +35,8 @@
     <!-- Dropdown Menu -->
     <transition name="dropdown">
       <div class="dropdown__menu" v-bind:class="{ active: show }" v-if="show">
+        <h4 class="dropdown__menu-heading">Notifications</h4>
         <ul class="dropdown__menu-nav">
-          <li class="dropdown__menu-item dropdown__menu-header">
-            <h4 class="dropdown__menu-heading">Notifications</h4>
-          </li>
           <li class="dropdown__menu-item" v-for="notification in notifications">
             <a href="#" class="dropdown__menu-link">
               <p class="dropdown__menu-text" v-html="notification.message"></p>

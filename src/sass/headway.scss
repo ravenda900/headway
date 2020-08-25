@@ -112,7 +112,6 @@
   z-index: 10;
   min-width: 300px;
   margin-top: 1rem;
-  overflow-y: auto;
   background-color: white;
   border: 1px solid var(--color-gray);
   background-clip: padding-box;
@@ -132,6 +131,8 @@
   &-nav {
     list-style: none;
     margin: 0;
+    overflow-y: auto;
+    max-height: 400px;
   }
   &-text {
     margin-left: 1rem;
@@ -143,16 +144,14 @@
     color: #999;
     font-size: .8em;
   }
-  &-item:not(:last-child) {
-    border-bottom: 1px solid #ddd;
-  }
-  &-header {
-    color: #2e4375;
-    padding: 0.5rem 0;
+  &-item {
+    border-top: 1px solid #ddd;
   }
   &-heading {
     margin: 0;
     text-align: center;
+    color: #2e4375;
+    padding: 0.5rem 0;
   }
 }
 
