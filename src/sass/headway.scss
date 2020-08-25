@@ -144,7 +144,7 @@
     color: #999;
     font-size: .8em;
   }
-  &-item {
+  &-item:not(:first-child) {
     border-top: 1px solid #ddd;
   }
   &-heading {
@@ -152,6 +152,7 @@
     text-align: center;
     color: #2e4375;
     padding: 0.5rem 0;
+    border-bottom: 1px solid #ddd
   }
 }
 
