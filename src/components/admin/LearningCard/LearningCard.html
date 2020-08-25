@@ -56,7 +56,7 @@
             </template>
             <ProgressBar v-if="videoIsUploading" :total="100" :completed="videoUploadPercent" />
             <ProgressBar v-if="youtubeIsUploading" :total="100" :completed="youtubeUploadPercent" />
-            <span v-show="videoIsUploading">Please wait. Your video is still processing. It will take some time.</span>
+            <span v-show="youtubeIsUploading">Please wait. Your video is still processing. It will take some time.</span>
             <div class="LearningCard__video" v-show="currentCard.video">
               <div class="embed-container"
                 v-if="subscription.product.name === 'Free Plan'">
