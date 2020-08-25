@@ -770,8 +770,6 @@ app.delete('/admin/card/:cardId/:format', checkAdminPermission, (req, res) => {
             console.warn(err)
           }
           Logger.debug(`S3 deleteObject ${Key} success`)
-          file.destroy()
-          
           if (format === 'video') {
             card.videoId = null
           } else if (format === 'audio') {
@@ -779,6 +777,7 @@ app.delete('/admin/card/:cardId/:format', checkAdminPermission, (req, res) => {
           } else {
             card.mediaId = null
           }
+          file.destroy()
           card.save()
           res.send('OK')
         })

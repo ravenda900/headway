@@ -148,10 +148,10 @@ export const removeVideo = (auth, { card, res }) => {
                 console.log('The API returned an error: ' + error)
                 return
             }
-            file.destroy()
             Logger.debug('Successfully deleted video from Youtube with embed url https://www.youtube.com/embed/' + card.videoId)
             card.videoId = null
             card.save()
+            file.destroy()
             res.send('OK')
         })
     })
