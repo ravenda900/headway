@@ -8,7 +8,7 @@ const includes = (models, id) => models.map(d => d.id).indexOf(id) >= 0
 
 @Scopes({
   public: {
-    attributes: ['id', 'name', 'stripe_subscription_status'],
+    attributes: ['id', 'name'],
   },
 })
 @Table({ timestamps: true })

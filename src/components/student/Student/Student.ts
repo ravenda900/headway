@@ -7,7 +7,7 @@ import './Student.scss'
 
 import store from '../../../store'
 
-import { BASE_URL } from '../../../constants'
+import { BASE_URL, PUSHER } from '../../../constants'
 import io from 'socket.io-client'
 import { throws } from 'assert'
 
@@ -40,20 +40,42 @@ export class Student extends Vue {
 
     updateRoute(route) {
         store.dispatch('getStudent')
-            .then(({ email }) => {
-                store.commit('setSocket', email)
-                
-                this.socket.on('update-student', () => {
+            .then(student => {
+                console.log('test', 123)
+                const Pusher = require('pusher-js') 
+                const studentId = student.id
+
+                Pusher.logToConsole = true
+
+                const pusher = new Pusher(PUSHER.KEY, {
+                    cluster: PUSHER.CLUSTER
+                })
+
+                const channel = pusher.subscribe('headway')
+
+                channel.bind(`studentId:${studentId}`, (data) => {
+                    this.$notify({
+                        group: 'student_notifs',
+                        text: data.notification.message,
+                        duration: 10000
+                    })
                     store.dispatch('getStudent')
-                        .then(({ notifications }) => {
-                            this.$notify({
-                                group: 'student_notifs',
-                                text: notifications[notifications.length - 1].message,
-                                duration: 10000
-                            })
-                        })
                 })
             })
+            // .then(({ email }) => {
+            //     store.commit('setSocket', email)
+                
+            //     this.socket.on('update-student', () => {
+            //         store.dispatch('getStudent')
+            //             .then(({ notifications }) => {
+            //                 this.$notify({
+            //                     group: 'student_notifs',
+            //                     text: notifications[notifications.length - 1].message,
+            //                     duration: 10000
+            //                 })
+            //             })
+            //     })
+            // })
         store.dispatch('setAppView', route.name)
     }
 

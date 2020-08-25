@@ -11,8 +11,7 @@ export const state = {
     studentListFilter: 'business',
     admin: {
         name: '',
-        email: '',
-    // stripe_subscription_status: ''
+        email: ''
     },
     sidebarOpen: false,
     notification: {

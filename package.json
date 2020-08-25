@@ -72,6 +72,8 @@
     "passport-jwt": "^4.0.0",
     "passport-local": "^1.0.0",
     "postcss-loader": "~2.0.10",
+    "pusher": "^3.0.1",
+    "pusher-js": "^7.0.0",
     "raw-loader": "~0.5.1",
     "rimraf": "~2.6.2",
     "sass-loader": "~6.0.6",

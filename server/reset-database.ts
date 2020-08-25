@@ -5,7 +5,6 @@ import { Business, Card, Course, Mentor, Student, Unit, Admin, BusinessStudent, 
 import { createAdmin, createStudent, createMentor } from './actions'
 import { hashPasswordSync } from './authentication'
 import { STRIPE_SECRET } from './constants'
-import { stripLow } from 'validator'
 import { Logger } from './logger'
 
 // Data

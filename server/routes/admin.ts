@@ -4,7 +4,7 @@ import { checkAdminLogin, checkAdminPermission, mockAdminLogin } from '../authen
 import { Logger } from '../logger'
 import { Admin, Business, BusinessCourse, Card, Course, CourseStudent, Student, Unit, BusinessStudent, Activity, Notification, File } from '../models'
 import { getSignedUrl, createPresignedPost, s3 } from '../s3'
-import { S3_BUCKET, UPLOAD_DIRECTORY, STRIPE_SECRET } from '../constants'
+import { S3_BUCKET, UPLOAD_DIRECTORY, STRIPE_SECRET, PUSHER  } from '../constants'
 import { get } from 'lodash'
 import mailer from '../mailer'
 import mail from '../mail'
@@ -393,10 +393,14 @@ app.post('/admin/student', (req, res) => {
       Business.findAll({ where: { id: businessIds } })
         .then(businesses => {
           const businessNames = businesses.map(b => '<strong>' + b.name + '<strong>')
-          // Notification.create({
-          //   message: 'You have been added to ' + businessNames.join(', ') + ' business' + (businessNames.length > 1 ? 'es' : ''),
-          //   studentId: result.id
-          // })
+          Notification.create({
+            message: 'You have been added to ' + businessNames.join(', ') + ' business' + (businessNames.length > 1 ? 'es' : ''),
+            studentId: result.id
+          }).then(notification => {
+            PUSHER.trigger('headway', `studentId:${result.id}`, {
+              notification
+            })
+          })
         })
       res.send(result)
     }).catch(err => {
@@ -481,10 +485,14 @@ app.delete('/admin/student/:studentId', checkAdminPermission, (req, res) => {
       ...student.courses.map(course => CourseStudent.destroy({ where: { studentId, courseId: course.id, } })),
     ]).then(results => {
       const businessNames = student.businesses.map(b => '<strong>' + b.name + '<strong>')
-      // Notification.create({
-      //   message: 'You have been removed to ' + businessNames.join(', ') + ' business' + (businessNames.length > 1 ? 'es' : ''),
-      //   studentId: student.id
-      // })
+      Notification.create({
+        message: 'You have been removed to ' + businessNames.join(', ') + ' business' + (businessNames.length > 1 ? 'es' : ''),
+        studentId: student.id
+      }).then(notification => {
+        PUSHER.trigger('headway', `studentId:${student.id}`, {
+          notification
+        })
+      })
       res.send('OK')
     })
   })
@@ -508,10 +516,14 @@ app.post('/admin/student-course', checkAdminPermission, (req, res) => {
     Promise.all(promises).then(studentCourses => {
       Course.findAll({ where: { id: courseIds } }).then(courses => {
         const courseNames = courses.map(c => '<strong>' + c.name + '</strong>')
-        // Notification.create({
-        //   message: 'You have been added to ' + courseNames.join(', ') + ' course' + (courseNames.length > 1 ? 's' : ''),
-        //   studentId: studentId
-        // })
+        Notification.create({
+          message: 'You have been added to ' + courseNames.join(', ') + ' course' + (courseNames.length > 1 ? 's' : ''),
+          studentId: studentId
+        }).then(notification => {
+          PUSHER.trigger('headway', `studentId:${studentId}`, {
+            notification
+          })
+        })
       })
       res.send('OK')
     })
@@ -523,10 +535,14 @@ app.delete('/admin/student-course', checkAdminPermission, (req, res) => {
 
   Course.findByPk(courseId).then(course => {
     CourseStudent.destroy({ where: { studentId, courseId, } }).then(result => {
-      // Notification.create({
-      //   message: 'You have been removed from <strong>' + course.name + '</strong> course',
-      //   studentId: studentId
-      // })
+      Notification.create({
+        message: 'You have been removed from <strong>' + course.name + '</strong> course',
+        studentId: studentId
+      }).then(notification => {
+        PUSHER.trigger('headway', `studentId:${studentId}`, {
+          notification
+        })
+      })
       res.send('OK')
     })
   })
@@ -550,10 +566,14 @@ app.post('/admin/student-business', checkAdminPermission, (req, res) => {
     Promise.all(promises).then(studentBusinesses => {
       Business.findAll({ where: { id: businessIds } }).then(businesses => {
         const businessNames = businesses.map(b => '<strong>' + b.name + '</strong>')
-        // Notification.create({
-        //   message: 'You have been added to ' + businessNames.join(', ') + ' business' + (businessNames.length > 1 ? 'es' : ''),
-        //   studentId: studentId
-        // })
+        Notification.create({
+          message: 'You have been added to ' + businessNames.join(', ') + ' business' + (businessNames.length > 1 ? 'es' : ''),
+          studentId: studentId
+        }).then(notification => {
+          PUSHER.trigger('headway', `studentId:${studentId}`, {
+            notification
+          })
+        })
       })
       res.send(studentBusinesses)
     })
@@ -564,10 +584,14 @@ app.delete('/admin/student-business', checkAdminPermission, (req, res) => {
   const { studentId, businessId } = req.body
   Business.findByPk(businessId, { include: [Course] }).then(business => {
     BusinessStudent.destroy({ where: { studentId, businessId, } }).then(result => {
-      // Notification.create({
-      //   message: 'You have been removed from <strong>' + business.name + '</strong> business',
-      //   studentId: studentId
-      // })
+      Notification.create({
+        message: 'You have been removed from <strong>' + business.name + '</strong> business',
+        studentId: studentId
+      }).then(notification => {
+        PUSHER.trigger('headway', `studentId:${studentId}`, {
+          notification
+        })
+      })
       res.send('OK')
     })
   })
@@ -601,10 +625,14 @@ app.post('/admin/business-course', checkAdminPermission, (req, res) => {
       }).then(business => {
         const courseNames = business.courses.map(c => '<strong>' + c.name + '</strong>')
         business.students.forEach(student => {
-          // Notification.create({
-          //   message: courseNames.join(', ') + ' course' + (courseNames.length > 1 ? 's are ' : ' is ') + 'added to <strong>' + business.name + '</strong> business',
-          //   studentId: student.id
-          // })
+          Notification.create({
+            message: courseNames.join(', ') + ' course' + (courseNames.length > 1 ? 's are ' : ' is ') + 'added to <strong>' + business.name + '</strong> business',
+            studentId: student.id
+          }).then(notification => {
+            PUSHER.trigger('headway', `studentId:${student.id}`, {
+              notification
+            })
+          })
         })
       })
       res.send('OK')
@@ -626,10 +654,14 @@ app.delete('/admin/business-course', checkAdminPermission, (req, res) => {
       const course = business.courses.find(c => c.id === courseId)
 
       business.students.forEach(student => {
-        // Notification.create({
-        //   message: '<strong>' + course.name + '</strong> has been removed from <strong>' + business.name + '</strong> business',
-        //   studentId: student.id
-        // })
+        Notification.create({
+          message: '<strong>' + course.name + '</strong> has been removed from <strong>' + business.name + '</strong> business',
+          studentId: student.id
+        }).then(notification => {
+          PUSHER.trigger('headway', `studentId:${student.id}`, {
+            notification
+          })
+        })
       }) 
       res.send('OK')
     })
