@@ -130,7 +130,7 @@ export const mockStudentLogin = (req, res, next) => {
   req.isAuthenticated = () => true // =\
   req.user = {
     student: {
-      id: 2
+      id: 1
     }
   }
   next()
