@@ -727,7 +727,7 @@ app.get('/admin/card/:cardId/:format', checkAdminPermission, (req, res) => {
           res.send(url)
         })
       } else {
-        res.send(file.name)
+        res.send('https://www.youtube.com/embed/' + file.name)
       }
     })
   })
@@ -777,8 +777,8 @@ app.delete('/admin/card/:cardId/:format', checkAdminPermission, (req, res) => {
           } else {
             card.mediaId = null
           }
-          file.destroy()
           card.save()
+          file.destroy()
           res.send('OK')
         })
       })

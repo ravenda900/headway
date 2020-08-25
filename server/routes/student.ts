@@ -53,7 +53,9 @@ app.put('/update-student-details', authStudentInvite, (req, res) => {
 app.get('/student/course/:courseId', checkStudentEnrolled, (req, res) => {
   Course.findByPk(req.params.courseId, {
     include: [
-      { model: Unit, include: [Card] }
+      { model: Unit, 
+        include: [Card.scope('includeFiles')] 
+      }
     ]
   }).then(course => {
     course.units.forEach(unit => {

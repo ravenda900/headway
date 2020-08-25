@@ -32,9 +32,7 @@ export class StudentHeader extends Vue {
     watchActiveStudentCard(newVal, oldVal) {
         if (newVal && newVal.audio) {
             this.$nextTick(() => {
-                if (this.$refs.player) {
-                    this.$refs.player.audioSrc = '/student/card/' + this.activeStudentCard.id + '/audio'
-                }
+                this.updateFileSrc(newVal.audio.type)
             })
         }
     }
@@ -67,6 +65,19 @@ export class StudentHeader extends Vue {
 
     get notificationCount() {
         return this.notifications && (this.notifications.length > 99 ? 99 : this.notifications.length)
+    }
+
+    updateFileSrc(format) {
+        store.dispatch('getFileUrl', {
+            cardId: this.activeStudentCard.id,
+            format: format
+        }).then(url => {
+            switch (format) {
+                case 'audio':
+                    this.$refs.player.audioSrc = url
+                break
+            }
+        })
     }
 
 }

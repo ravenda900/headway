@@ -1,8 +1,16 @@
 <div class="StudentCard">
   <div class="StudentCard__main">
     <div class="StudentCard__hero">
-      <div class="StudentCard__video" v-show="activeStudentCard.video">
-        <video @contextmenu="handleContextMenu" controlsList="nodownload" :src="video" controls class="StudentCard__player"></video>
+      <div class="StudentCard__video" v-if="activeStudentCard.video">
+        <iframe
+          v-if="activeStudentCard.video.type === 'youtube'"
+          ref="youtube"
+          frameborder="0" 
+          allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+          class="StudentCard__player">
+        </iframe>
+        <video ref="video" @contextmenu="handleContextMenu" controlsList="nodownload" controls class="StudentCard__player" v-else></video>
       </div>
     </div>
     <div class="StudentCard__content">

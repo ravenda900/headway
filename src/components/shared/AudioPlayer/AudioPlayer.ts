@@ -41,7 +41,7 @@ export class AudioPlayer extends Vue {
 
     get srcWithBaseUrl() {
         if (this.audioSrc) {
-            return BASE_URL + this.audioSrc
+            return this.audioSrc
         }
     }
 

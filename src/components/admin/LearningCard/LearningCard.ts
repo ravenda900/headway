@@ -11,7 +11,6 @@ import { AudioPlayer } from '../../shared/AudioPlayer'
 import { Quiz } from '../../student/Quiz'
 import store from '../../../store'
 import { BASE_URL } from '../../../constants'
-import Axios from 'axios'
 
 
 @Component({
@@ -189,16 +188,12 @@ export class LearningCard extends Vue {
         }
         if (newVal && newVal.video) {
             this.$nextTick(() => {
-                if (newVal.video.type === 'video') {
-                    this.updateVideoSrc()
-                } else if (newVal.video.type === 'youtube') {
-                    this.updateYoutubeSrc()
-                }
+                this.updateFileSrc(newVal.video.type)
             })
         }
         if (newVal && newVal.audio) {
             this.$nextTick(() => {
-                this.updateAudioSrc()
+                this.updateFileSrc(newVal.audio.type)
             })
         }
     }
@@ -242,40 +237,25 @@ export class LearningCard extends Vue {
         uploadprogress: this.youtubeUploadProgress
     }
 
-    updateVideoSrc() {
-        if (!this.currentCard.video) {
-            console.log('abort updateVideoSrc', this.currentCard.video)
-            return
-        }
-        Axios.get(BASE_URL + '/admin/card/' + this.currentCard.id + '/video', {
-            params: {
-                subscriptionPlan: this.subscription.product.name
+    updateFileSrc(format) {
+        store.dispatch('getFileUrl', {
+            cardId: this.currentCard.id,
+            format: format
+        }).then(url => {
+            switch (format) {
+                case 'audio': 
+                    this.$refs.audio.setAttribute('src', url)
+                    this.$refs.player.audioSrc = url
+                break
+                case 'video': 
+                    this.$refs.video.setAttribute('src', url)
+                    this.$refs.mobileVideo.setAttribute('src', url)
+                break
+                case 'youtube':
+                    this.$refs.youtube.setAttribute('src', url)
+                    this.$refs.mobileYoutube.setAttribute('src', url)
+                break
             }
-        }).then(d => {
-            this.$refs.video.setAttribute('src', d.data)
-            this.$refs.mobileVideo.setAttribute('src', d.data)
-        })
-    }
-
-    updateYoutubeSrc() {
-        if (!this.currentCard.video) {
-            console.log('abort updateYoutubeSrc', this.currentCard.video)
-            return
-        }
-        Axios.get(BASE_URL + '/admin/card/' + this.currentCard.id + '/youtube').then(d => {
-            this.$refs.youtube.setAttribute('src', 'https://www.youtube.com/embed/' + d.data)
-            this.$refs.mobileYoutube.setAttribute('src', 'https://www.youtube.com/embed/' + d.data)
-        })
-    }
-
-    updateAudioSrc() {
-        if (!this.currentCard.audio) {
-            console.log('abort updateAudioSrc', this.currentCard.audio)
-            return
-        }
-        Axios.get(BASE_URL + '/admin/card/' + this.currentCard.id + '/audio').then(d => {
-            this.$refs.audio.setAttribute('src', d.data)
-            this.$refs.player.audioSrc = d.data
         })
     }
 
@@ -314,12 +294,15 @@ export class LearningCard extends Vue {
             courseId: parseInt(this.route.params.courseId),
             unitId: parseInt(this.route.params.unitId),
             cardId: parseInt(this.route.params.cardId),
-            file: file.name
+            file: {
+                name: file.name,
+                type: 'audio'
+            }
         }
         this.audioIsUploading = false
         this.$refs.AudioDropzone.removeAllFiles(true)
-        this.currentCard.audio = file.name
-        this.updateAudioSrc()
+        this.currentCard.audio = 
+        this.updateFileSrc('audio')
         store.commit('setActiveCardAudio', payload)
         store.dispatch('getStorageUsage')
     }
@@ -329,12 +312,14 @@ export class LearningCard extends Vue {
             courseId: parseInt(this.route.params.courseId),
             unitId: parseInt(this.route.params.unitId),
             cardId: parseInt(this.route.params.cardId),
-            file: file.name
+            file: {
+                name: file.name,
+                type: 'video'
+            }
         }
         this.videoIsUploading = false
         this.$refs.VideoDropzone.removeAllFiles(true)
-        this.currentCard.video = file.name
-        this.updateVideoSrc()
+        this.updateFileSrc('video')
         store.commit('setActiveCardVideo', payload) // WARNING: this overwrites content edited during upload
         store.dispatch('getStorageUsage')
     }
@@ -344,12 +329,14 @@ export class LearningCard extends Vue {
             courseId: parseInt(this.route.params.courseId),
             unitId: parseInt(this.route.params.unitId),
             cardId: parseInt(this.route.params.cardId),
-            file: response.url
+            file: {
+                name: response.id,
+                type: 'youtube'
+            }
         }
         this.youtubeIsUploading = false
         this.$refs.YoutubeDropzone.removeAllFiles(true)
-        this.currentCard.video = response.url
-        this.updateYoutubeSrc()
+        this.updateFileSrc('youtube')
         store.commit('setActiveCardVideo', payload) // WARNING: this overwrites content edited during upload
         store.dispatch('getStorageUsage')
     }

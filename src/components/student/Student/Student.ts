@@ -41,7 +41,6 @@ export class Student extends Vue {
     updateRoute(route) {
         store.dispatch('getStudent')
             .then(student => {
-                console.log('test', 123)
                 const Pusher = require('pusher-js') 
                 const studentId = student.id
 

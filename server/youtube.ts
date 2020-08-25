@@ -106,8 +106,8 @@ export const uploadVideo = (auth, { name, file, res, card, size }) => {
             card.videoId = file.id
             card.save()
             Logger.debug('Successfully uploaded video to Youtube with embed url https://www.youtube.com/embed/' + response.data.id)
-                res.send({
-                url: 'https://www.youtube.com/embed/' + response.data.id
+            res.send({
+                id: response.data.id
             })
         })
     })

@@ -138,6 +138,11 @@ export const actions = {
         })
     },
 
+    getFileUrl(context, { format, cardId }) {
+        return axios.get(BASE_URL + '/admin/card/' + cardId + '/' + format)
+            .then(({ data }) => data)
+    },
+
     getStudentCard(context, { courseId, unitId, cardId }) {
         if (!context.activeStudentCourse) {
             return axios.get(BASE_URL + '/student/course/' + courseId).then(res => {

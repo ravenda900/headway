@@ -7,14 +7,13 @@ import { Quiz } from '../Quiz'
 import { Task } from '../Task'
 
 import './StudentCard.scss'
-import { BASE_URL } from '../../../constants'
 
 @Component({
     template: require('./StudentCard.html'),
     name: 'StudentCard',
     components: {
         Quiz,
-        Task,
+        Task
     }
 })
 
@@ -25,22 +24,13 @@ export class StudentCard extends Vue {
     quizVisible = false
     taskVisible = false
 
+    $refs: {
+        video: HTMLVideoElement
+        youtube: HTMLIFrameElement
+    }
+
     get parsedQuestions() {
         return this.activeStudentCard.quiz ? JSON.parse(this.activeStudentCard.quiz) : []
-    }
-
-    get video() {
-        if (!this.activeStudentCard.id) {
-            return null
-        }
-        return `${BASE_URL}/student/card/${this.activeStudentCard.id}/video`
-    }
-
-    get audio() {
-        if (!this.activeStudentCard.id) {
-            return null
-        }
-        return `${BASE_URL}/student/card/${this.activeStudentCard.id}/audio`
     }
 
     showQuiz() {
@@ -93,6 +83,15 @@ export class StudentCard extends Vue {
         this.updateRoute(newVal)
     }
 
+    @Watch('activeStudentCard')
+    watchActiveStudentCard(newVal, oldVal) {
+        if (newVal && newVal.video) {
+            this.$nextTick(() => {
+                this.updateFileSrc(newVal.video.type)
+            })
+        }
+    }
+
     mounted() {
         this.updateRoute(this.$route)
     }
@@ -141,4 +140,21 @@ export class StudentCard extends Vue {
             }
         })
     }
+
+    updateFileSrc(format) {
+        store.dispatch('getFileUrl', {
+            cardId: this.activeStudentCard.id,
+            format: format
+        }).then(url => {
+            switch (format) {
+                case 'video':
+                    this.$refs.video.setAttribute('src', url)
+                break
+                case 'youtube':
+                    this.$refs.youtube.setAttribute('src', url)
+                break
+            }
+        })
+    }
+
 }

@@ -25,7 +25,7 @@
             >
             </vue-dropzone>
             <ProgressBar v-show="audioIsUploading" :total="100" :completed="audioUploadPercent" />
-            <div class="flex flex--aligned" v-show="currentCard.audio">
+            <div class="flex flex--aligned" v-if="currentCard.audio">
               <audio controls ref="audio" style="flex: 1"></audio>
               <i class="fal fa-trash-alt btn btn--icon LearningCard__delete-audio" @click="removeAudio"></i>
             </div>
@@ -57,9 +57,9 @@
             <ProgressBar v-if="videoIsUploading" :total="100" :completed="videoUploadPercent" />
             <ProgressBar v-if="youtubeIsUploading" :total="100" :completed="youtubeUploadPercent" />
             <span v-show="youtubeIsUploading">Please wait. Your video is still processing. It will take some time.</span>
-            <div class="LearningCard__video" v-show="currentCard.video">
+            <div class="LearningCard__video" v-if="currentCard.video">
               <div class="embed-container"
-                v-if="subscription.product.name === 'Free Plan'">
+                v-if="currentCard.video.type === 'youtube'">
                 <iframe
                   ref="youtube"
                   frameborder="0" 
@@ -100,11 +100,11 @@
             </div>
           </div>
           <div class="Mobile__hero">
-            <div class="Mobile__video" v-show="currentCard.video">
+            <div class="Mobile__video" v-if="currentCard.video">
               <div class="embed-container"
-                v-if="subscription.product.name === 'Free Plan'">
+                v-if="currentCard.video.type === 'youtube'">
                 <iframe
-                  ref="mobileYoutubeVideo"
+                  ref="mobileYoutube"
                   frameborder="0" 
                   allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" 
                   allowfullscreen>
