@@ -16,18 +16,19 @@ import File from './File'
         }
       ]
     }]
+  },
+  includeFiles: {
+    include: [{
+      model: () => File,
+      as: 'media'
+    }, {
+      model: () => File,
+      as: 'audio'
+    }, {
+      model: () => File,
+      as: 'video'
+    }]
   }
-})
-@DefaultScope({
-  include: [{
-    model: () => File,
-    as: 'Audio',
-    where: { type: 'audio' }
-  }, {
-    model: () => File,
-    as: 'Video',
-    where: { type: 'video' }
-  }]
 })
 
 @Table({ timestamps: true })
@@ -36,7 +37,6 @@ export class Card extends Model<Card> {
   @Column slug: string
   @Column(DataType.TEXT({ length: 'long' })) content: string
   @Column evidence_task: string
-  @Column media: string
   @Column(DataType.TEXT) quiz: string
 
   @BeforeUpdate
@@ -54,14 +54,20 @@ export class Card extends Model<Card> {
 
   @ForeignKey(() => File)
   @Column
+  mediaId: number
+  @BelongsTo(() => File, 'mediaId')
+  media: File
+
+  @ForeignKey(() => File)
+  @Column
   audioId: number
-  @HasOne(() => File)
+  @BelongsTo(() => File, 'audioId')
   audio: File
 
   @ForeignKey(() => File)
   @Column
-  videoId: number
-  @HasOne(() => File)
+  videoId: number 
+  @BelongsTo(() => File, 'videoId')
   video: File
 
 }

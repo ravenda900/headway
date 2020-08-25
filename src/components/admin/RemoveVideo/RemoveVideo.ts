@@ -32,6 +32,7 @@ export class RemoveVideo extends Vue {
             .then(() => {
                 this.submitting = false
                 this.toggleModal('removeVideo')
+                store.dispatch('getStorageUsage')
             })
     }
 }

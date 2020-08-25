@@ -243,7 +243,11 @@ app.post('/admin/unit', checkAdminPermission, (req, res) => {
 
 app.get('/admin/unit/:unitId', (req, res) => {
   const { unitId } = req.params
-  Unit.findByPk(unitId, { include: [Card, Course] }).then(unit => {
+  Unit.findByPk(unitId, { 
+    include: [
+      { 
+        model: Card.scope('includeFiles')
+      }, Course] }).then(unit => {
     if (unit && unit.course.adminId === req.user.admin.id) {
       res.send(unit)
     } else {
@@ -269,120 +273,107 @@ app.post('/admin/unit/:unitId/card', (req, res) => {
   })
 })
 
-app.post('/s3-policy', (req, res) => {
-  const {cardId, file, format, adminId} = req.query
-  const Key = `${adminId}/${cardId}/${file}`
-  Card.findByPk(cardId, { include: [{ model: Unit, include: [Course] }] }).then(card => {
-    if (card && card.unit.course.adminId === parseInt(adminId)) {
-      createPresignedPost(Key).then(d => {
-        // console.log(d)
-        if (format === 'video') {
-          card.video = file
-        } else if (format === 'audio') {
-          card.audio = file
-        } else {
-          card.media = file
-        }
-        card.save()
-        // map to format required here: https://rowanwins.github.io/vue-dropzone/docs/dist/#/aws-s3-upload
-        res.send({
-          signature: d.fields,
-          postEndpoint: d.url,
+app.get('/admin/storage/size', (req, res) => {  
+  Course.findAll({ 
+    where: { adminId: req.user.admin.id },
+    include: [{
+      model: Unit,
+      include: [{
+        model: Card.scope('includeFiles')
+      }]
+    }]
+  }).then(courses => {
+    let bytes = 0
+
+    courses.forEach(course => {
+      course.units.forEach(unit => {
+        unit.cards.forEach(card => {
+          if (card.media) {
+            bytes += card.media.size
+          }
+          if (card.audio) {
+            bytes += card.audio.size
+          }
+          if (card.video) {
+            bytes += card.video.size
+          }
         })
-      }).catch(err => {
-        res.status(500).send({ message: err })
       })
-    } else {
-      res.status(401).send({ message: 'Unauthorized: Admin does not own Card #' + cardId })
-    }
-  })
-})
-
-app.get('/admin/storage/size', (req, res) => {
-  const { subscriptionPlan } = req.query
-
-  if (subscriptionPlan === 'Free Plan') {
-    res.send({ size: '0 bytes' })
-  } else {
-    const params = {
-      Bucket: S3_BUCKET,
-      Prefix: `${req.user.admin.id}/`
-    }
-    s3.listObjects(params, (err, data) => {
-      const bytes = data.Contents.reduce((totalBytes, content) => {
-        totalBytes += content.Size
-        return totalBytes
-      }, 0)
-        
-      let storageUsageSize = ''
-      if (bytes >= 1073741824) {
-        storageUsageSize = `${(bytes / 1073741824).toFixed(2)} GB`
-      } else if (bytes >= 1048576) {
-        storageUsageSize = `${(bytes / 1048576).toFixed(2)} MB`
-      } else if (bytes >= 1024) {
-        storageUsageSize = `${(bytes / 1024).toFixed(2)} KB`
-      } else if (bytes > 1) {
-        storageUsageSize = `${bytes} bytes`
-      } else if (bytes == 1) {
-        storageUsageSize = `${bytes} byte`
-      } else {
-        storageUsageSize = '0 bytes'
-      }
-      res.send({ size: storageUsageSize, sizeInBytes: bytes })
     })
-  }
+    let storageUsageSize = ''
+    if (bytes >= 1073741824) {
+      storageUsageSize = `${(bytes / 1073741824).toFixed(2)} GB`
+    } else if (bytes >= 1048576) {
+      storageUsageSize = `${(bytes / 1048576).toFixed(2)} MB`
+    } else if (bytes >= 1024) {
+      storageUsageSize = `${(bytes / 1024).toFixed(2)} KB`
+    } else if (bytes > 1) {
+      storageUsageSize = `${bytes} bytes`
+    } else if (bytes == 1) {
+      storageUsageSize = `${bytes} byte`
+    } else {
+      storageUsageSize = '0 bytes'
+    }
+    res.send({ size: storageUsageSize, sizeInBytes: bytes })
+  })
 })
 
 app.post('/admin/upload/:format', (req, res) => {
   const { format } = req.params
-  const { cardId, subscriptionPlan } = req.body
+  const { cardId, size } = req.body
   const { file } = req.files
 
-  // Card.findByPk(cardId, { include: [{ model: Unit, include: [Course] }] }).then(card => {
-  //   if (card && card.unit.course.adminId === req.user.admin.id) {
-  //     if (subscriptionPlan === 'Free Plan' && format === 'video') {
-  //       fs.readFile('client_secret.json', (error, content) => {
-  //         if (error) {
-  //             console.log('Error loading client secret file: ' + error);
-  //             return
-  //         }
-  //         // Authorize a client with the loaded credentials
-  //         authorize(JSON.parse(content), uploadVideo, {
-  //           name: card.name,
-  //           file,
-  //           res,
-  //           card
-  //         })
-  //       })
-  //     } else {
-  //       const Key = `${req.user.admin.id}/${card.id}/${file.name}`
-  //       console.log('key', Key)
-  //       const params = {
-  //         Bucket: S3_BUCKET,
-  //         Key,
-  //         Body: file.data
-  //       }
-  //       s3.putObject(params, (err) => {
-  //         if (err) {
-  //           Logger.error(`Failed to upload file to ${S3_BUCKET}/${Key}`)
-  //         } else {
-  //           if (format === 'video') {
-  //             card.video = file.name
-  //           } else if (format === 'audio') {
-  //             card.audio = file.name
-  //           } else {
-  //             card.media = file.name
-  //           }
-  //           card.save()
-  //           Logger.debug(`Successfully uploaded file to ${S3_BUCKET}/${Key}`)
-  //           res.send('Uploaded')
-  //         }
-  //       }) 
-  //     }
-  //   } else {
-  //     res.status(401).send({ message: 'Unauthorized: Admin does not own Card #' + cardId })
-  //   }
-  // })
+  Card.findByPk(cardId, { include: [{ model: Unit, include: [Course] }] }).then(card => {
+    if (card && card.unit.course.adminId === req.user.admin.id) {
+      if (format === 'youtube') {
+        fs.readFile('client_secret.json', (error, content) => {
+          if (error) {
+              console.log('Error loading client secret file: ' + error);
+              return
+          }
+          // Authorize a client with the loaded credentials
+          authorize(JSON.parse(content), uploadVideo, {
+            name: card.name,
+            file,
+            res,
+            card,
+            size
+          })
+        })
+      } else {
+        const Key = `${req.user.admin.id}/${card.id}/${file.name}`
+        const params = {
+          Bucket: S3_BUCKET,
+          Key,
+          Body: file.data
+        }
+        s3.putObject(params, (err) => {
+          if (err) {
+            Logger.error(`Failed to upload file to ${S3_BUCKET}/${Key}`)
+          } else {
+            File.create({
+              type: format || 'media',
+              size: size,
+              name: file.name
+            }).then(file => {
+              if (format === 'video') {
+                card.videoId = file.id
+              } else if (format === 'audio') {
+                card.audioId = file.id
+              } else {
+                card.mediaId = file.id
+              }
+              card.save()
+            })
+            Logger.debug(`Successfully uploaded file to ${S3_BUCKET}/${Key}`)
+            res.send('Uploaded')
+          }
+        }) 
+      }
+    } else {
+      res.status(401).send({ message: 'Unauthorized: Admin does not own Card #' + cardId })
+    }
+  })
 })
 
 
@@ -690,22 +681,23 @@ app.get('/admin/business/:businessId', checkAdminPermission, (req, res) => {
 
 app.get('/admin/card/:cardId/:format', checkAdminPermission, (req, res) => {
   const { cardId, format } = req.params
-  const { subscriptionPlan } = req.query
   Card.scope('includeCourse').findByPk(cardId).then(card => {
-    if (subscriptionPlan === 'Free Plan' && format === 'video') {
-      res.send(card.video)
-    } else {
-      let filename = card.media // default
-      if (format === 'video') {
-        filename = card.video.name
-      } else if (format === 'audio') {
-        filename = card.audio.name
-      }
-      const Key = `${req.user.admin.id}/${cardId}/${filename}`
-      getSignedUrl(Key).then(url => {
-        res.send(url)
-      })
+    let fileId = card.mediaId
+    if (format === 'video' || format === 'youtube') {
+      fileId = card.videoId
+    } else if (format === 'audio') {
+      fileId = card.audioId
     }
+    File.findByPk(fileId).then(file => {
+      const Key = `${req.user.admin.id}/${cardId}/${file.name}`
+      if (format !== 'youtube') {
+        getSignedUrl(Key).then(url => {
+          res.send(url)
+        })
+      } else {
+        res.send(file.name)
+      }
+    })
   })
 })
 
@@ -721,35 +713,45 @@ app.delete('/admin/card/:cardId/:format', checkAdminPermission, (req, res) => {
             return
         }
         // Authorize a client with the loaded credentials
-        authorize(JSON.parse(content), removeVideo, card)
+        authorize(JSON.parse(content), removeVideo, {
+          card,
+          res
+        })
       })
     } else {
-      let filename
+      let fileId = card.mediaId
       if (format === 'video') {
-        filename = card.video
+        fileId = card.videoId
       } else if (format === 'audio') {
-        filename = card.audio
+        fileId = card.audioId
       }
-      const Key = `${req.user.admin.id}/${cardId}/${filename}`
-      Logger.debug(`S3 deleteObject ${Key} request`)
-      const params = {
-        Bucket: S3_BUCKET,
-        Key,
-      }
-      s3.deleteObject(params, (err, data) => {
-        if (err) {
-          console.warn(err)
+      
+      File.findByPk(fileId).then(file => {
+        const Key = `${req.user.admin.id}/${cardId}/${file.name}`
+        Logger.debug(`S3 deleteObject ${Key} request`)
+        const params = {
+          Bucket: S3_BUCKET,
+          Key,
         }
-        Logger.debug(`S3 deleteObject ${Key} success`)
+        s3.deleteObject(params, (err, data) => {
+          if (err) {
+            console.warn(err)
+          }
+          Logger.debug(`S3 deleteObject ${Key} success`)
+          file.destroy()
+          
+          if (format === 'video') {
+            card.videoId = null
+          } else if (format === 'audio') {
+            card.audioId = null
+          } else {
+            card.mediaId = null
+          }
+          card.save()
+          res.send('OK')
+        })
       })
-      if (format === 'video') {
-        card.video = null
-      } else if (format === 'audio') {
-        card.audio = null
-      }
-      card.save()
     }
-    res.send('OK')
   })
 })
 

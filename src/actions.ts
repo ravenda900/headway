@@ -36,12 +36,8 @@ export const actions = {
                 })
             })
     },
-    getStorageUsage(context, subscription) {
-        return axios.get(BASE_URL + '/admin/storage/size', {
-            params: {
-                subscriptionPlan: subscription.product.name
-            }
-        })
+    getStorageUsage(context) {
+        return axios.get(BASE_URL + '/admin/storage/size')
             .then(({ data }) => {
                 context.commit('set', {
                     key: 'storageUsage',

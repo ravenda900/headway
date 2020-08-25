@@ -47,6 +47,8 @@ export class LearningCard extends Vue {
     audioIsUploading = false
     videoUploadPercent = 0
     videoIsUploading = false
+    youtubeUploadPercent = 0
+    youtubeIsUploading = false
 
     sharedConfig = {
         key: 'OD2G2D4I4D3A13hC7D6C5D4D2E3J4C6A6C6cgsmtJ2C8eheE5kC-8==',
@@ -162,10 +164,11 @@ export class LearningCard extends Vue {
         audio: HTMLAudioElement
         AudioDropzone: any
         video: HTMLVideoElement
-        youtubeVideo: HTMLIFrameElement
+        youtube: HTMLIFrameElement
         mobileVideo: HTMLVideoElement
-        mobileYoutubeVideo: HTMLIFrameElement
+        mobileYoutube: HTMLIFrameElement
         VideoDropzone: any
+        YoutubeDropzone: any
         name: HTMLInputElement
         player: AudioPlayer
     }
@@ -186,7 +189,11 @@ export class LearningCard extends Vue {
         }
         if (newVal && newVal.video) {
             this.$nextTick(() => {
-                this.updateVideoSrc()
+                if (newVal.video.type === 'video') {
+                    this.updateVideoSrc()
+                } else if (newVal.video.type === 'youtube') {
+                    this.updateYoutubeSrc()
+                }
             })
         }
         if (newVal && newVal.audio) {
@@ -226,14 +233,13 @@ export class LearningCard extends Vue {
         uploadprogress: this.videoUploadProgress
     }
 
-    awss3 = (format) => {
-        return {
-            signingURL: this.signingUrl(format),
-            headers: {},
-            params: {},
-            sendFileToServer: false, // switching to false causes issues. try again
-            withCredentials: false
-        }
+    youtubeDropzoneOptions = {
+        url: BASE_URL + '/admin/upload/youtube',
+        thumbnailWidth: 150,
+        maxFiles: 1,
+        maxFilesize: this.maxFileSize, // mb
+        timeout: 99999999,
+        uploadprogress: this.youtubeUploadProgress
     }
 
     updateVideoSrc() {
@@ -246,21 +252,19 @@ export class LearningCard extends Vue {
                 subscriptionPlan: this.subscription.product.name
             }
         }).then(d => {
-            if (this.subscription.product.name === 'Free Plan') {
-                if (this.$refs.youtubeVideo) {
-                    this.$refs.youtubeVideo.setAttribute('src', 'https://www.youtube.com/embed/' + d.data)
-                }
-                if (this.$refs.mobileYoutubeVideo) {
-                    this.$refs.mobileYoutubeVideo.setAttribute('src', 'https://www.youtube.com/embed/' + d.data)
-                }
-            } else {
-                if (this.$refs.video) {
-                    this.$refs.video.setAttribute('src', d.data)
-                }
-                if (this.$refs.mobileVideo) {
-                    this.$refs.mobileVideo.setAttribute('src', d.data)
-                }
-            }
+            this.$refs.video.setAttribute('src', d.data)
+            this.$refs.mobileVideo.setAttribute('src', d.data)
+        })
+    }
+
+    updateYoutubeSrc() {
+        if (!this.currentCard.video) {
+            console.log('abort updateYoutubeSrc', this.currentCard.video)
+            return
+        }
+        Axios.get(BASE_URL + '/admin/card/' + this.currentCard.id + '/youtube').then(d => {
+            this.$refs.youtube.setAttribute('src', 'https://www.youtube.com/embed/' + d.data)
+            this.$refs.mobileYoutube.setAttribute('src', 'https://www.youtube.com/embed/' + d.data)
         })
     }
 
@@ -270,56 +274,38 @@ export class LearningCard extends Vue {
             return
         }
         Axios.get(BASE_URL + '/admin/card/' + this.currentCard.id + '/audio').then(d => {
-            // console.log(d.data)
-            if (this.$refs.audio) {
-                this.$refs.audio.setAttribute('src', d.data)
-            }
-            if (this.$refs.player) {
-                this.$refs.player.audioSrc = d.data
-            }
+            this.$refs.audio.setAttribute('src', d.data)
+            this.$refs.player.audioSrc = d.data
         })
     }
 
     videoUploadProgress(file, percent, size) {
-        // console.log('percent', percent)
         this.videoUploadPercent = Math.round(percent)
     }
 
-    signingUrl(format) {
-        return (f) => {
-            return BASE_URL + '/s3-policy?format=' + format + '&file=' + f.name + '&cardId=' + + this.currentCard.id + '&adminId=' + this.admin.id +
-                '&subscriptionPlan=' + this.subscription.product.name
-        }
-    }
-
-    s3UploadError(errorMessage) {
-        console.log('s3UploadError', { errorMessage })
-    }
-
-    s3UploadSuccess(s3ObjectLocation) {
-        console.log('s3UploadSuccess', { s3ObjectLocation })
-        store.dispatch('getStorageUsage', this.subscription)
+    youtubeUploadProgress(file, percent, size) {
+        this.youtubeUploadPercent = Math.round(percent)
     }
 
     videoSendingEvent(file, xhr, formData) {
         this.videoIsUploading = true
-        // formData.append('cardId', this.currentCard.id)
+        formData.append('cardId', this.currentCard.id)
+        formData.append('size', file.size)
     }
 
-    youtubeVideoSendingEvent(file, xhr, formData) {
-        this.videoIsUploading = true
+    youtubeSendingEvent(file, xhr, formData) {
+        this.youtubeIsUploading = true
         formData.append('cardId', this.currentCard.id)
-        formData.append('subscriptionPlan', this.subscription.product.name)
+        formData.append('size', file.size)
     }
 
     audioSendingEvent(file, xhr, formData) {
-        // console.log('audioSendingEvent')
         this.audioIsUploading = true
-        // formData.append('cardId', this.currentCard.id)
+        formData.append('cardId', this.currentCard.id)
+        formData.append('size', file.size)
     }
 
     audioUploadProgress(file, percent, size) {
-        // console.log('percent', percent)
         this.audioUploadPercent = Math.round(percent)
     }
 
@@ -334,8 +320,8 @@ export class LearningCard extends Vue {
         this.$refs.AudioDropzone.removeAllFiles(true)
         this.currentCard.audio = file.name
         this.updateAudioSrc()
-        store.dispatch('getStorageUsage', this.subscription)
         store.commit('setActiveCardAudio', payload)
+        store.dispatch('getStorageUsage')
     }
 
     videoSuccess(file) {
@@ -345,29 +331,27 @@ export class LearningCard extends Vue {
             cardId: parseInt(this.route.params.cardId),
             file: file.name
         }
-        store.dispatch('getStorageUsage', this.subscription)
         this.videoIsUploading = false
         this.$refs.VideoDropzone.removeAllFiles(true)
         this.currentCard.video = file.name
         this.updateVideoSrc()
-        store.dispatch('getStorageUsage', this.subscription)
         store.commit('setActiveCardVideo', payload) // WARNING: this overwrites content edited during upload
+        store.dispatch('getStorageUsage')
     }
 
-    youtubeVideoSuccess(file, response) {
-        console.log('response', response)
+    youtubeSuccess(file, response) {
         const payload = {
             courseId: parseInt(this.route.params.courseId),
             unitId: parseInt(this.route.params.unitId),
             cardId: parseInt(this.route.params.cardId),
             file: response.url
         }
-        this.videoIsUploading = false
-        this.$refs.VideoDropzone.removeAllFiles(true)
+        this.youtubeIsUploading = false
+        this.$refs.YoutubeDropzone.removeAllFiles(true)
         this.currentCard.video = response.url
-        this.updateVideoSrc()
-        store.dispatch('getStorageUsage', this.subscription)
+        this.updateYoutubeSrc()
         store.commit('setActiveCardVideo', payload) // WARNING: this overwrites content edited during upload
+        store.dispatch('getStorageUsage')
     }
 
     removeAudio() {
@@ -383,21 +367,13 @@ export class LearningCard extends Vue {
 
     removeVideo() {
         if (this.subscription.product.name === 'Free Plan') {
-            if (this.$refs.youtubeVideo) {
-                const youtubeVideoSrc = this.$refs.youtubeVideo.src
-                this.$refs.youtubeVideo.src = youtubeVideoSrc
-            }
-            if (this.$refs.mobileYoutubeVideo) {
-                const mobileYoutubeVideoSrc = this.$refs.youtubeVideo.src
-                this.$refs.youtubeVideo.src = mobileYoutubeVideoSrc
-            }
+            const youtubeSrc = this.$refs.youtube.src
+            this.$refs.youtube.src = youtubeSrc
+            const mobileYoutubeSrc = this.$refs.youtube.src
+            this.$refs.youtube.src = mobileYoutubeSrc
         } else {
-            if (this.$refs.video) {
-                this.$refs.video.pause()
-            }
-            if (this.$refs.mobileVideo) {
-                this.$refs.video.pause()
-            }
+            this.$refs.video.pause()
+            this.$refs.video.pause()
         }
         store.commit('set', {
             key: 'removeVideoCardId',

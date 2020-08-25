@@ -32,6 +32,7 @@ export class RemoveAudio extends Vue {
             .then(() => {
                 this.submitting = false
                 this.toggleModal('removeAudio')
+                store.dispatch('getStorageUsage')
             })
     }
 }

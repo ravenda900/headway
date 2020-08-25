@@ -5,6 +5,7 @@ const service = google.youtube('v3')
 const readline = require('readline')
 const OAuth2 = google.auth.OAuth2
 import { Logger } from './logger'
+import { File } from './models'
 
 // If modifying these scopes, delete your previously saved credentials
 // at ~/.credentials/upload_app_session.json
@@ -73,7 +74,7 @@ const storeToken = token => {
     })
 }
 
-export const uploadVideo = (auth, { name, file, res, card }) => {
+export const uploadVideo = (auth, { name, file, res, card, size }) => {
     service.videos.insert({
         auth: auth,
         part: 'snippet,contentDetails,status',
@@ -97,12 +98,17 @@ export const uploadVideo = (auth, { name, file, res, card }) => {
             console.log('The API returned an error: ' + error)
             return
         }
-
-        card.video = response.data.id
-        card.save()
-        Logger.debug('Successfully uploaded video to Youtube with embed url https://www.youtube.com/embed/' + response.data.id)
-        res.send({
-            url: 'https://www.youtube.com/embed/' + response.data.id
+        File.create({
+            type: 'youtube',
+            size: size,
+            name: response.data.id
+        }).then(file => {
+            card.videoId = file.id
+            card.save()
+            Logger.debug('Successfully uploaded video to Youtube with embed url https://www.youtube.com/embed/' + response.data.id)
+                res.send({
+                url: 'https://www.youtube.com/embed/' + response.data.id
+            })
         })
     })
 }
@@ -132,18 +138,21 @@ export const updateVideo = (auth, { id, name, res }) => {
     })
 }
 
-export const removeVideo = (auth, card) => {
-    service.videos.delete({
-        auth: auth,
-        id: card.video
-    }, (error, response) => {
-        if (error) {
-            console.log('The API returned an error: ' + error)
-            return
-        }
-
-        Logger.debug('Successfully deleted video from Youtube with embed url https://www.youtube.com/embed/' + card.video)
-        card.video = null
-        card.save()
+export const removeVideo = (auth, { card, res }) => {
+    File.findByPk(card.videoId).then(file => {
+        service.videos.delete({
+            auth: auth,
+            id: file.name
+        }, (error, response) => {
+            if (error) {
+                console.log('The API returned an error: ' + error)
+                return
+            }
+            file.destroy()
+            Logger.debug('Successfully deleted video from Youtube with embed url https://www.youtube.com/embed/' + card.videoId)
+            card.videoId = null
+            card.save()
+            res.send('OK')
+        })
     })
 }

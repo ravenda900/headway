@@ -20,11 +20,8 @@
               v-if="!currentCard.audio"
               :options="audioDropzoneOptions"
               :includeStyling="false"
-              :awss3="awss3('audio')"
               @vdropzone-sending="audioSendingEvent"
               @vdropzone-success="audioSuccess"
-              @vdropzone-s3-upload-error="s3UploadError"
-              @vdropzone-s3-upload-success="s3UploadSuccess"
             >
             </vue-dropzone>
             <ProgressBar v-show="audioIsUploading" :total="100" :completed="audioUploadPercent" />
@@ -37,14 +34,14 @@
             <label class="label" for="VideoDropzone">Video</label>
             <template v-if="!currentCard.video">
               <vue-dropzone
-                id="VideoDropzone"
-                ref="VideoDropzone"
+                id="YoutubeDropzone"
+                ref="YoutubeDropzone"
                 class="Dropzone Dropzone--video"
                 v-if="subscription.product.name === 'Free Plan'"
-                :options="videoDropzoneOptions"
+                :options="youtubeDropzoneOptions"
                 :includeStyling="false"
-                @vdropzone-sending="youtubeVideoSendingEvent"
-                @vdropzone-success="youtubeVideoSuccess"
+                @vdropzone-sending="youtubeSendingEvent"
+                @vdropzone-success="youtubeSuccess"
               ></vue-dropzone>
               <vue-dropzone
                 id="VideoDropzone"
@@ -53,20 +50,18 @@
                 v-else
                 :options="videoDropzoneOptions"
                 :includeStyling="false"
-                :awss3="awss3('video')"
                 @vdropzone-sending="videoSendingEvent"
                 @vdropzone-success="videoSuccess"
-                @vdropzone-s3-upload-error="s3UploadError"
-                @vdropzone-s3-upload-success="s3UploadSuccess"
               ></vue-dropzone>
             </template>
-            <ProgressBar v-show="videoIsUploading" :total="100" :completed="videoUploadPercent" />
+            <ProgressBar v-if="videoIsUploading" :total="100" :completed="videoUploadPercent" />
+            <ProgressBar v-if="youtubeIsUploading" :total="100" :completed="youtubeUploadPercent" />
             <span v-show="videoIsUploading">Please wait. Your video is still processing. It will take some time.</span>
             <div class="LearningCard__video" v-show="currentCard.video">
               <div class="embed-container"
                 v-if="subscription.product.name === 'Free Plan'">
                 <iframe
-                  ref="youtubeVideo"
+                  ref="youtube"
                   frameborder="0" 
                   allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
                   allowfullscreen>
